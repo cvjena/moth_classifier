@@ -43,7 +43,7 @@ def main(args, experiment_name="Moth Classifier"):
 		model_kwargs=dict(pooling=args.pooling),
 
 		dataset_cls=dataset.Dataset,
-		dataset_kwargs_factory=None,
+		dataset_kwargs_factory=dataset.Dataset.kwargs,
 
 		updater_cls=updater_cls,
 		updater_kwargs=updater_kwargs,

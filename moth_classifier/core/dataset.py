@@ -28,7 +28,7 @@ class Dataset(
 
 		self.prepare = prepare
 		# for these models, we need to scale from 0..1 to -1..1
-		self.zero_mean = opts.model_type in ["inception", "inception_imagenet"]
+		self.zero_mean = opts.model_type in ["inception", "inception_imagenet", "inception_inat"]
 		self._setup_augmentations(opts)
 
 	def _setup_augmentations(self, opts):
@@ -132,4 +132,6 @@ class Dataset(
 			im = im * 2 - 1
 			parts = parts * 2 - 1
 
+		self._profile_img(im, "postprocess")
+		self._profile_img(parts, "(parts) postprocess")
 		return im, parts

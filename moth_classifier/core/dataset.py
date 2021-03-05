@@ -4,11 +4,19 @@ import numpy as np
 
 from chainercv import transforms as tr
 from cvdatasets.dataset import AnnotationsReadMixin
+from cvdatasets.dataset import BasePartMixin
+from cvdatasets.dataset import ImageProfilerMixin
 from cvdatasets.dataset import IteratorMixin
 from cvdatasets.dataset import TransformMixin
 from cvdatasets.utils import transforms as tr2
 
-class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
+class Dataset(
+	ImageProfilerMixin,
+	TransformMixin,
+	BasePartMixin,
+	IteratorMixin,
+	AnnotationsReadMixin):
+
 	label_shift = None
 
 	@classmethod
@@ -20,7 +28,7 @@ class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
 
 		self.prepare = prepare
 		# for these models, we need to scale from 0..1 to -1..1
-		self.zero_mean = opts.model_type in ["inception", "inception_imagenet"],
+		self.zero_mean = opts.model_type in ["inception", "inception_imagenet"]
 		self._setup_augmentations(opts)
 
 	def _setup_augmentations(self, opts):
@@ -72,14 +80,12 @@ class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
 		else:
 			return im, parts, lab
 
-		im, parts, label = im_obj.as_tuple()
-
-		return im,
-
 
 	def preprocess(self, im_obj):
 		im, _, lab = im_obj.as_tuple()
+		self._profile_img(im, "before prepare")
 		im = self.prepare(im, size=self.size)
+		self._profile_img(im, "after prepare")
 
 		lab -= (self.label_shift or 0)
 
@@ -87,7 +93,10 @@ class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
 
 		if self._annot.part_type != "GLOBAL":
 			for i, part in enumerate(im_obj.visible_crops(self.ratio)):
+
+				if i == 0: self._profile_img(part, "(part) before prepare")
 				part = self.prepare(part, size=self.part_size)
+				if i == 0: self._profile_img(part, "(part) after prepare")
 				parts.append(part)
 
 
@@ -98,6 +107,7 @@ class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
 
 		for aug, params in self.augmentations:
 			im = aug(im, **params)
+			self._profile_img(im, aug.__name__)
 
 		aug_parts = []
 		for i, part in enumerate(parts):
@@ -108,7 +118,9 @@ class Dataset(TransformMixin, IteratorMixin, AnnotationsReadMixin):
 					params = dict(params, size=self._part_size)
 
 				part = aug(part, **params)
-				aug_parts.append(part)
+				if i == 0: self._profile_img(part, f"(part) {aug.__name__}")
+
+			aug_parts.append(part)
 
 		return im, aug_parts
 

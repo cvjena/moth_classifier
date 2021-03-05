@@ -9,6 +9,7 @@ fi
 export DATA=${DATA:-$(realpath ${_home}/../dataset_info.yml)}
 
 DATASET=${DATASET:-AMMOD_MOTHS1}
+PARTS=${PARTS:-GLOBAL}
 
 OPTS="${OPTS} --prepare_type ${PREPARE_TYPE}"
 OPTS="${OPTS} --n_jobs ${N_JOBS}"

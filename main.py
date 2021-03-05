@@ -6,10 +6,10 @@ import logging
 
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
-from cvfinetune import classifier
 from cvfinetune.finetuner import FinetunerFactory
 from cvfinetune.training.trainer import SacredTrainer
 
+from moth_classifier.core import classifier
 from moth_classifier.core import dataset
 from moth_classifier.utils import parser
 
@@ -37,7 +37,7 @@ def main(args, experiment_name="Moth Classifier"):
 	updater_cls, updater_kwargs = updater_setup(args)
 
 	tuner = tuner_factory(opts=args,
-		classifier_cls=classifier.Classifier,
+		classifier_cls=classifier.get_classifier(args),
 		classifier_kwargs={},
 
 		model_kwargs=dict(pooling=args.pooling),
@@ -48,6 +48,9 @@ def main(args, experiment_name="Moth Classifier"):
 		updater_cls=updater_cls,
 		updater_kwargs=updater_kwargs,
 	)
+
+	with tuner.train_data.enable_img_profiler():
+		tuner.train_data[0]
 
 	if args.mode == "train":
 		tuner.run(opts=args,

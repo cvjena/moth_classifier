@@ -11,11 +11,11 @@ if [[ $error != 0 ]]; then
 	exit $error
 fi
 
-echo "Results are saved under ${OUTPUT}"
+echo "Results are saved under ${OUTPUT_DIR}"
 
 VACUUM=${VACUUM:-1}
 if [[ $VACUUM == 1 ]]; then
-	echo "=!=!=!= On error, removing folder ${OUTPUT} =!=!=!="
+	echo "=!=!=!= On error, removing folder ${OUTPUT_DIR} =!=!=!="
 fi
 
 { # try
@@ -28,8 +28,8 @@ fi
 } || { # catch
 
 	if [[ ${VACUUM} == 1 ]]; then
-		echo "Error occured! Removing ${OUTPUT}"
-		rm -r ${OUTPUT}
+		echo "Error occured! Removing ${OUTPUT_DIR}"
+		rm -r ${OUTPUT_DIR}
 	fi
 }
 

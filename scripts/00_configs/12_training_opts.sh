@@ -19,7 +19,9 @@ if [[ -z ${DATASET} ]]; then
 fi
 
 OUTPUT_SUFFIX=${OUTPUT_SUFFIX:-""}
-OUTPUT_DIR=${OUTPUT_DIR:-${_home:-..}/.results/ft_${DATASET}/${OPTIMIZER}${OUTPUT_SUFFIX}}
+OUTPUT_PREFIX=${OUTPUT_PREFIX:-"${_home:-..}/.results"}
+_now=$(date +%Y-%m-%d-%H.%M.%S.%N)
+OUTPUT_DIR=${OUTPUT_DIR:-${OUTPUT_PREFIX}/${DATASET}/${OPTIMIZER}${OUTPUT_SUFFIX}/${_now}}
 
 
 # >>> Augmentations >>>

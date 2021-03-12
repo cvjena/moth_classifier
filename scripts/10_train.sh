@@ -11,11 +11,26 @@ if [[ $error != 0 ]]; then
 	exit $error
 fi
 
-$PYTHON $RUN_SCRIPT train \
-	${DATA} \
-	${DATASET} \
-	${PARTS} \
-	${OPTS} \
-	$@
+echo "Results are saved under ${OUTPUT}"
+
+VACUUM=${VACUUM:-1}
+if [[ $VACUUM == 1 ]]; then
+	echo "=!=!=!= On error, removing folder ${OUTPUT} =!=!=!="
+fi
+
+{ # try
+	$PYTHON $RUN_SCRIPT train \
+		${DATA} \
+		${DATASET} \
+		${PARTS} \
+		${OPTS} \
+		$@
+} || { # catch
+
+	if [[ ${VACUUM} == 1 ]]; then
+		echo "Error occured! Removing ${OUTPUT}"
+		rm -r ${OUTPUT}
+	fi
+}
 
 source ${CLUSTER_TEARDOWN}

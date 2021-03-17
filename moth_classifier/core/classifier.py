@@ -21,6 +21,20 @@ class GlobalClassifier(classifier.Classifier):
 	pass
 
 class PartsClassifier(classifier.SeparateModelClassifier):
+	n_parts = 4
+
+	@property
+	def output_size(self):
+		return self.n_parts * self.feat_size
+
+	def _encode_parts(self, feats):
+		n, t, feat_size = feats.shape
+
+		# concat all features together
+		return F.reshape(feats, (n, t*feat_size))
+
+		# average over the t-dimension
+		return F.mean(part_feats, axis=1)
 
 	def __call__(self, X, parts, y):
 		assert X.ndim == 4 and parts.ndim == 5 , \
@@ -35,8 +49,8 @@ class PartsClassifier(classifier.SeparateModelClassifier):
 
 		# stack over the t-dimension
 		part_feats = F.stack(part_feats, axis=1)
-		# average over the t-dimension
-		part_pred = self.model.fc(F.mean(part_feats, axis=1))
+		part_feats = self._encode_parts(part_feats)
+		part_pred = self.model.fc(part_feats)
 
 		glob_loss, glob_accu = self.loss(glob_pred, y), self.separate_model.accuracy(glob_pred, y)
 		part_loss, part_accu = self.loss(part_pred, y), self.model.accuracy(part_pred, y)

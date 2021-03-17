@@ -8,7 +8,7 @@ fi
 
 export DATA=${DATA:-$(realpath ${_home}/../dataset_info.yml)}
 
-DATASET=${DATASET:-AMMOD_MOTHS1}
+DATASET=${DATASET:-AMMOD_MOTHS_CROPPED}
 PARTS=${PARTS:-GLOBAL}
 
 OPTS="${OPTS} --prepare_type ${PREPARE_TYPE}"

@@ -38,7 +38,7 @@ def main(args, experiment_name="Moth Classifier"):
 
 	tuner = tuner_factory(opts=args,
 		classifier_cls=classifier.get_classifier(args),
-		classifier_kwargs={},
+		classifier_kwargs=dict(only_head=args.only_head),
 
 		model_kwargs=dict(pooling=args.pooling),
 

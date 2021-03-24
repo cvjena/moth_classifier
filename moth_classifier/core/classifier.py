@@ -17,8 +17,18 @@ def get_classifier(opts):
 		return PartsClassifier
 
 class GlobalClassifier(classifier.Classifier):
-	# no change is needed here
-	pass
+	def __init__(self, only_head, *args, **kwargs):
+		super(GlobalClassifier, self).__init__(*args, **kwargs)
+		self._only_head = only_head
+
+	def _get_features(self, X, model):
+		if self._only_head:
+			with chainer.using_config("train", False), chainer.no_backprop_mode():
+				features = model(X, layer_name=model.meta.feature_layer)
+		else:
+			features = model(X, layer_name=model.meta.feature_layer)
+
+		return _unpack(features)
 
 class PartsClassifier(classifier.SeparateModelClassifier):
 	n_parts = 4
@@ -39,12 +49,12 @@ class PartsClassifier(classifier.SeparateModelClassifier):
 	def __call__(self, X, parts, y):
 		assert X.ndim == 4 and parts.ndim == 5 , \
 			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
-		glob_pred = _unpack(self.separate_model(X, layer_name=self.layer_name))
+		glob_feat = self._get_features(X, self.separate_model)
+		glob_pred = self.separate_model.fc(glob_feat)
 
 		part_feats = []
 		for part in parts.transpose(1,0,2,3,4):
-			part_feat = _unpack(self.model(part,
-				layer_name=self.model.meta.feature_layer))
+			part_feat = self._get_features(part, self.model)
 			part_feats.append(part_feat)
 
 		# stack over the t-dimension

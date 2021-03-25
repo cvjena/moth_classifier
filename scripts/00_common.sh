@@ -1,5 +1,4 @@
 
-_home=$(realpath $(dirname $0)/..)
 CONFIG_DIR=$(realpath ${_home:-..}/scripts/00_configs)
 export OMP_NUM_THREADS=${OMP_NUM_THREADS:-2}
 

@@ -1,3 +1,11 @@
+
+if [[ ${ONLY_HEAD:-0} == 1 ]]; then
+	OPTS="${OPTS} --only_head"
+	OPTIMIZER=sgd
+	LR_INIT=1e-2
+	_output_subdir="/only_clf"
+fi
+
 OPTIMIZER=${OPTIMIZER:-rmsprop}
 BATCH_SIZE=${BATCH_SIZE:-32}
 UPDATE_SIZE=${UPDATE_SIZE:-64}
@@ -18,10 +26,11 @@ if [[ -z ${DATASET} ]]; then
 	error=1
 fi
 
+
 OUTPUT_SUFFIX=${OUTPUT_SUFFIX:-""}
 OUTPUT_PREFIX=${OUTPUT_PREFIX:-"${_home:-..}/.results"}
 _now=$(date +%Y-%m-%d-%H.%M.%S.%N)
-OUTPUT_DIR=${OUTPUT_DIR:-${OUTPUT_PREFIX}/${DATASET}/${OPTIMIZER}${OUTPUT_SUFFIX}/${_now}}
+OUTPUT_DIR=${OUTPUT_DIR:-${OUTPUT_PREFIX}/${DATASET}${_output_subdir}/${OPTIMIZER}${OUTPUT_SUFFIX}/${_now}}
 
 
 # >>> Augmentations >>>

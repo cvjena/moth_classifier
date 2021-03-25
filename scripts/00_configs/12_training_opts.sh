@@ -2,7 +2,11 @@
 if [[ ${ONLY_HEAD:-0} == 1 ]]; then
 	OPTS="${OPTS} --only_head"
 	OPTIMIZER=sgd
-	LR_INIT=1e-2
+	if [[ $MODEL_TYPE == "inception_imagenet" ]]; then
+        LR_INIT=1e-1
+    else
+        LR_INIT=1e-2
+    fi
 	_output_subdir="/only_clf"
 fi
 

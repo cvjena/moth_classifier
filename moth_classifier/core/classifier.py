@@ -71,7 +71,7 @@ class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
 			return F.reshape(feats, (n, t*feat_size))
 
 		# average over the t-dimension
-		return F.mean(part_feats, axis=1)
+		return F.mean(feats, axis=1)
 
 	def __call__(self, X, parts, y):
 		assert X.ndim == 4 and parts.ndim == 5 , \

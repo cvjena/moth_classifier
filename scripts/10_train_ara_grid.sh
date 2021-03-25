@@ -49,7 +49,7 @@ for parts in ${PARTS}; do
 			DATASET=${ds} \
 			PARTS=${parts} \
 			MODEL_TYPE=inception_${pretrain} \
-			OUTPUT_SUFFIX="/${pretrain}" \
+			OUTPUT_SUFFIX="/${pretrain}_parts" \
 			${SBATCH} --job-name ${job_name} ${SBATCH_OPTS} \
 				10_train.sh $@
 		done

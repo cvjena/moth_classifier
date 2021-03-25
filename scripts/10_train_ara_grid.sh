@@ -49,6 +49,7 @@ for parts in ${PARTS}; do
 			DATASET=${ds} \
 			PARTS=${parts} \
 			MODEL_TYPE=inception_${pretrain} \
+			OUTPUT_SUFFIX="/${pretrain}" \
 			${SBATCH} --job-name ${job_name} ${SBATCH_OPTS} \
 				10_train.sh $@
 		done
@@ -56,4 +57,4 @@ for parts in ${PARTS}; do
 done
 
 # try to remove if folder is empty
-rmdir --ignore-fail-on-non-empty ${SBATCH_OUTPUT}
+#rmdir --ignore-fail-on-non-empty ${SBATCH_OUTPUT}

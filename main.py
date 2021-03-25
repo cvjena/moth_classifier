@@ -3,6 +3,7 @@ if __name__ != '__main__': raise Exception("Do not import me!")
 
 import chainer
 import logging
+import numpy as np
 
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
@@ -13,16 +14,16 @@ from moth_classifier.core import classifier
 from moth_classifier.core import dataset
 from moth_classifier.utils import parser
 
-def updater_setup(opts):
+def get_updater_params(opts):
+	kwargs = dict()
 	if opts.mode == "train" and opts.update_size > opts.batch_size:
-		updater_cls = MiniBatchUpdater
-		updater_kwargs = dict(update_size=opts.update_size)
+		cls = MiniBatchUpdater
+		kwargs["update_size"] = opts.update_size
 
 	else:
-		updater_cls = StandardUpdater
-		updater_kwargs = dict()
+		cls = StandardUpdater
 
-	return updater_cls, updater_kwargs
+	return dict(updater_cls=cls, updater_kwargs=kwargs)
 
 
 def main(args, experiment_name="Moth Classifier"):
@@ -34,23 +35,21 @@ def main(args, experiment_name="Moth Classifier"):
 	tuner_factory = FinetunerFactory.new(args)
 	comm = tuner_factory.get("comm")
 
-	updater_cls, updater_kwargs = updater_setup(args)
-
 	tuner = tuner_factory(opts=args,
-		classifier_cls=classifier.get_classifier(args),
-		classifier_kwargs=dict(only_head=args.only_head),
+		**classifier.get_params(args),
 
 		model_kwargs=dict(pooling=args.pooling),
 
 		dataset_cls=dataset.Dataset,
 		dataset_kwargs_factory=dataset.Dataset.kwargs,
 
-		updater_cls=updater_cls,
-		updater_kwargs=updater_kwargs,
+		**get_updater_params(args),
 	)
 
+	logging.info("Profiling the image processing: ")
 	with tuner.train_data.enable_img_profiler():
-		tuner.train_data[0]
+		data = tuner.train_data
+		data[np.random.randint(len(data))]
 
 	if args.mode == "train":
 		tuner.run(opts=args,

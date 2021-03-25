@@ -1,3 +1,5 @@
+import abc
+import chainer
 import chainer.functions as F
 
 from cvfinetune import classifier
@@ -9,16 +11,21 @@ def _unpack(var):
 def _mean(arrays):
 	return F.mean(F.stack(arrays, axis=0), axis=0)
 
-def get_classifier(opts):
+def get_params(opts):
+	kwargs = dict(only_head=opts.only_head)
 	if opts.parts == "GLOBAL":
-		return GlobalClassifier
+		cls = GlobalClassifier
 
 	else:
-		return PartsClassifier
+		cls = PartsClassifier
+		kwargs["concat_features"] = opts.concat_features
 
-class GlobalClassifier(classifier.Classifier):
+	return dict(classifier_cls=cls, classifier_kwargs=kwargs)
+
+class OnlyHeadMixin(abc.ABC):
+
 	def __init__(self, only_head, *args, **kwargs):
-		super(GlobalClassifier, self).__init__(*args, **kwargs)
+		super(OnlyHeadMixin, self).__init__(*args, **kwargs)
 		self._only_head = only_head
 
 	def _get_features(self, X, model):
@@ -30,18 +37,35 @@ class GlobalClassifier(classifier.Classifier):
 
 		return _unpack(features)
 
-class PartsClassifier(classifier.SeparateModelClassifier):
+
+class GlobalClassifier(OnlyHeadMixin, classifier.Classifier):
+
+	def __call__(self, X, y):
+		feat = self._get_features(X, self.model)
+		pred = self.model.fc(feat)
+		loss, accu = self.loss(pred, y), self.model.accuracy(pred, y)
+
+		self.report(loss=loss, accuracy=accu)
+		return loss
+
+
+class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
 	n_parts = 4
+
+	_concat = True
 
 	@property
 	def output_size(self):
-		return self.n_parts * self.feat_size
+		if self._concat:
+			return self.n_parts * self.feat_size
+
+		return self.feat_size
 
 	def _encode_parts(self, feats):
-		n, t, feat_size = feats.shape
-
-		# concat all features together
-		return F.reshape(feats, (n, t*feat_size))
+		if self._concat:
+			# concat all features together
+			n, t, feat_size = feats.shape
+			return F.reshape(feats, (n, t*feat_size))
 
 		# average over the t-dimension
 		return F.mean(part_feats, axis=1)

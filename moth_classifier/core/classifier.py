@@ -52,7 +52,10 @@ class GlobalClassifier(OnlyHeadMixin, classifier.Classifier):
 class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
 	n_parts = 4
 
-	_concat = True
+	def __init__(self, concat_features, *args, **kwargs):
+		super(PartsClassifier, self).__init__(*args, **kwargs)
+		self._concat = concat_features
+
 
 	@property
 	def output_size(self):

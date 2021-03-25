@@ -2,8 +2,6 @@
 from cvargparse import Arg
 from cvargparse import BaseParser
 from cvfinetune.parser import FineTuneParser
-from cvfinetune.parser import add_dataset_args
-from cvfinetune.parser import add_model_args
 
 def parse_args(args=None, namespace=None):
 	main_parser = BaseParser()
@@ -30,6 +28,10 @@ def parse_args(args=None, namespace=None):
 			help="Indicates that OpenMPI is used!"),
 
 	], group_name="Training arguments")
+	parser.add_args([
+		Arg("--concat_features", action="store_true",
+			help="If set, concatenate part features instead of averaging."),
+	], group_name="Model arguments")
 
 	parser.add_args([
 		Arg("--no_sacred", action="store_true",

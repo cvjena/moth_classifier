@@ -25,7 +25,7 @@ if [[ $SBATCH == "sbatch" ]]; then
 fi
 
 
-
+export _home=$(realpath $(dirname $0)/..)
 export IS_CLUSTER=1
 export OPTS="${OPTS} --no_progress"
 export N_JOBS=4

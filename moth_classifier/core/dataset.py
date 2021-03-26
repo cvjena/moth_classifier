@@ -4,7 +4,7 @@ import numpy as np
 
 from chainercv import transforms as tr
 from cvdatasets.dataset import AnnotationsReadMixin
-from cvdatasets.dataset import BasePartMixin
+from cvdatasets.dataset import UniformPartMixin
 from cvdatasets.dataset import ImageProfilerMixin
 from cvdatasets.dataset import IteratorMixin
 from cvdatasets.dataset import TransformMixin
@@ -13,7 +13,7 @@ from cvdatasets.utils import transforms as tr2
 class Dataset(
 	ImageProfilerMixin,
 	TransformMixin,
-	BasePartMixin,
+	UniformPartMixin,
 	IteratorMixin,
 	AnnotationsReadMixin):
 

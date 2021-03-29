@@ -22,12 +22,13 @@ if [[ $SBATCH == "sbatch" ]]; then
 	mkdir -p $SBATCH_OUTPUT
 	SBATCH_OPTS="${SBATCH_OPTS} --output ${SBATCH_OUTPUT}/${FMT}"
 	echo "slurm outputs will be saved under ${SBATCH_OUTPUT}"
+
+    export OPTS="${OPTS} --no_progress"
 fi
 
 
 export _home=$(realpath $(dirname $0)/..)
 export IS_CLUSTER=1
-export OPTS="${OPTS} --no_progress"
 export N_JOBS=4
 export CONDA_ENV=chainer7
 
@@ -49,7 +50,7 @@ for parts in ${PARTS}; do
 			DATASET=${ds} \
 			PARTS=${parts} \
 			MODEL_TYPE=inception_${pretrain} \
-			OUTPUT_SUFFIX="/${pretrain}_parts" \
+			OUTPUT_SUFFIX="/${pretrain}_${parts}" \
 			${SBATCH} --job-name ${job_name} ${SBATCH_OPTS} \
 				10_train.sh $@
 		done

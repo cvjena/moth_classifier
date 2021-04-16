@@ -11,9 +11,10 @@ for run in $(seq $N_RUNS); do
 		for pretrain in ${PRETRAIN}; do
 			for ds in ${DATASETS}; do
 				DATASET=${ds} \
+				PARTS=${parts} \
 				OPTS="${opts}" \
 				MODEL_TYPE=inception_${pretrain} \
-				OUTPUT_PREFIX=$(realpath ../.results/${pretrain}/${_output_subdir}${parts}) \
+				OUTPUT_PREFIX=$(realpath ../.results/${pretrain}/${parts}2) \
 					./10_train.sh $@
 
 			done

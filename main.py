@@ -53,7 +53,7 @@ def main(args, experiment_name="Moth Classifier"):
 
 	if args.mode == "train":
 		tuner.run(opts=args,
-			trainer_cls = SacredTrainer,
+			trainer_cls=SacredTrainer,
 
 			sacred_params=dict(
 				name=experiment_name,
@@ -61,6 +61,12 @@ def main(args, experiment_name="Moth Classifier"):
 				no_observer=args.no_sacred
 			)
 		)
+
+	elif args.mode == "evaluate":
+		assert args.load != None, \
+			"For the evaluation, load parameter must be set!"
+
+		tuner.evaluate(trainer_cls=SacredTrainer)
 
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")

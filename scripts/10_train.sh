@@ -3,6 +3,7 @@ _home=${_home:-$(realpath $(dirname $0)/..)}
 
 source 00_common.sh
 
+source ${SACRED_SETUP}
 source ${TRAINING_OPTS}
 source ${CLUSTER_SETUP}
 

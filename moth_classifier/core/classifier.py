@@ -1,8 +1,11 @@
 import abc
 import chainer
+import numpy as np
 import chainer.functions as F
 
 from cvfinetune import classifier
+from typing import Dict
+from typing import Callable
 
 
 def _unpack(var):
@@ -37,15 +40,31 @@ class OnlyHeadMixin(abc.ABC):
 
 		return _unpack(features)
 
+def eval_prediction(pred, gt, evaluations: Dict[str, Callable], reporter):
+	for metric, func in evaluations.items():
+		reporter(**{metric: func(pred, gt)})
+
+def f1_score(pred, gt):
+	score, support = F.f1_score(pred, gt)
+	xp = score.device.xp
+	return xp.nanmean(score.array)
 
 class GlobalClassifier(OnlyHeadMixin, classifier.Classifier):
 
 	def __call__(self, X, y):
 		feat = self._get_features(X, self.model)
 		pred = self.model.fc(feat)
-		loss, accu = self.loss(pred, y), self.model.accuracy(pred, y)
 
-		self.report(loss=loss, accuracy=accu)
+		eval_prediction(pred, y,
+			evaluations=dict(
+				accuracy=self.model.accuracy,
+				f1=f1_score,
+			),
+			reporter=self.report)
+
+		loss = self.loss(pred, y)
+		self.report(loss=loss)
+
 		return loss
 
 
@@ -93,12 +112,18 @@ class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
 		part_loss, part_accu = self.loss(part_pred, y), self.model.accuracy(part_pred, y)
 
 		_mean_pred = _mean([F.softmax(glob_pred), F.softmax(part_pred)])
-		accu = self.model.accuracy(_mean_pred, y)
+
+		eval_prediction(_mean_pred, y,
+			evaluations=dict(
+				accuracy=self.model.accuracy,
+				f1=f1_score,
+			),
+			reporter=self.report)
+
 		loss = _mean([part_loss, glob_loss])
 
 		self.report(
 			loss=loss,
-			accuracy=accu,
 			p_accu=part_accu,
 			g_accu=glob_accu,
 		)

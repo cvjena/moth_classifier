@@ -68,8 +68,9 @@ def main(args, experiment_name="Moth Classifier"):
 		assert args.load != None, \
 			"For the evaluation, load parameter must be set!"
 
-		tuner.evaluate(trainer_cls=SacredTrainer)
+		res = tuner.evaluator()
 
+		import pdb; pdb.set_trace()
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")
 

@@ -10,6 +10,7 @@ OPTS="${OPTS} --gpu ${GPU}"
 
 LABEL_SHIFT=${LABEL_SHIFT:-0}
 OPTS="${OPTS} --label_shift ${LABEL_SHIFT}"
+OPTS="${OPTS} --no_snapshot"
 
 error=0
 

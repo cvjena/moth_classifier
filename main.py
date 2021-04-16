@@ -4,6 +4,8 @@ if __name__ != '__main__': raise Exception("Do not import me!")
 import chainer
 import logging
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')
 
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater

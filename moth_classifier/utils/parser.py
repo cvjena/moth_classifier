@@ -17,6 +17,8 @@ def add_training_args(parser: BaseParser):
 		Arg("--mpi", action="store_true",
 			help="Indicates that OpenMPI is used!"),
 
+		Arg("--test_fold_id", type=int, default=0),
+
 	], group_name="Training arguments")
 
 

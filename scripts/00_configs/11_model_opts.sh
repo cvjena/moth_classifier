@@ -14,7 +14,8 @@ case $MODEL_TYPE in
 			INPUT_SIZE=427
 		fi
 		;;
-	"cvmodelz.ResNet50" | "cvmodelz.ResNet101" | "cvmodelz.ResNet152" )
+	"cvmodelz.ResNet50" | "cvmodelz.ResNet101" | "cvmodelz.ResNet152" | \
+	"chainercv2.resnet50" )
 		PARTS_INPUT_SIZE=224
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=224

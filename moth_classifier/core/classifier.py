@@ -53,7 +53,7 @@ class GlobalClassifier(OnlyHeadMixin, classifiers.Classifier):
 
 	def forward(self, X, y):
 		feat = self._get_features(X, self.model)
-		pred = self.model.fc(feat)
+		pred = self.model.clf_layer(feat)
 
 		eval_prediction(pred, y,
 			evaluations=dict(
@@ -96,7 +96,7 @@ class PartsClassifier(OnlyHeadMixin, classifiers.SeparateModelClassifier):
 		assert X.ndim == 4 and parts.ndim == 5 , \
 			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
 		glob_feat = self._get_features(X, self.separate_model)
-		glob_pred = self.separate_model.fc(glob_feat)
+		glob_pred = self.separate_model.clf_layer(glob_feat)
 
 		part_feats = []
 		for part in parts.transpose(1,0,2,3,4):
@@ -106,7 +106,7 @@ class PartsClassifier(OnlyHeadMixin, classifiers.SeparateModelClassifier):
 		# stack over the t-dimension
 		part_feats = F.stack(part_feats, axis=1)
 		part_feats = self._encode_parts(part_feats)
-		part_pred = self.model.fc(part_feats)
+		part_pred = self.model.clf_layer(part_feats)
 
 		glob_loss, glob_accu = self.loss(glob_pred, y), self.separate_model.accuracy(glob_pred, y)
 		part_loss, part_accu = self.loss(part_pred, y), self.model.accuracy(part_pred, y)

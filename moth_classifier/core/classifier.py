@@ -3,7 +3,7 @@ import chainer
 import numpy as np
 import chainer.functions as F
 
-from cvfinetune import classifier
+from cvmodelz import classifiers
 from typing import Dict
 from typing import Callable
 
@@ -49,9 +49,9 @@ def f1_score(pred, gt):
 	xp = score.device.xp
 	return xp.nanmean(score.array)
 
-class GlobalClassifier(OnlyHeadMixin, classifier.Classifier):
+class GlobalClassifier(OnlyHeadMixin, classifiers.Classifier):
 
-	def __call__(self, X, y):
+	def forward(self, X, y):
 		feat = self._get_features(X, self.model)
 		pred = self.model.fc(feat)
 
@@ -68,7 +68,7 @@ class GlobalClassifier(OnlyHeadMixin, classifier.Classifier):
 		return loss
 
 
-class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
+class PartsClassifier(OnlyHeadMixin, classifiers.SeparateModelClassifier):
 	n_parts = 4
 
 	def __init__(self, concat_features, *args, **kwargs):
@@ -92,7 +92,7 @@ class PartsClassifier(OnlyHeadMixin, classifier.SeparateModelClassifier):
 		# average over the t-dimension
 		return F.mean(feats, axis=1)
 
-	def __call__(self, X, parts, y):
+	def forward(self, X, parts, y):
 		assert X.ndim == 4 and parts.ndim == 5 , \
 			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
 		glob_feat = self._get_features(X, self.separate_model)

@@ -3,11 +3,12 @@ if __name__ != '__main__': raise Exception("Do not import me!")
 
 import chainer
 import logging
-import numpy as np
 import matplotlib
+import numpy as np
 matplotlib.use('Agg')
 
 from chainer.training.updaters import StandardUpdater
+from chainer_addons.links import PoolingType
 from chainer_addons.training import MiniBatchUpdater
 from cvfinetune.finetuner import FinetunerFactory
 from cvfinetune.training.trainer import SacredTrainer

@@ -28,7 +28,7 @@ class Dataset(
 
 		self.prepare = prepare
 		# for these models, we need to scale from 0..1 to -1..1
-		self.zero_mean = opts.model_type in ["inception", "inception_imagenet", "inception_inat"]
+		self.zero_mean = opts.model_type in ["cvmodelz.InceptionV3"]
 		self._setup_augmentations(opts)
 
 	def _setup_augmentations(self, opts):

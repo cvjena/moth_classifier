@@ -1,10 +1,10 @@
 FINAL_POOLING=${FINAL_POOLING:-g_avg}
 
 # resnet inception inception_tf [vgg]
-MODEL_TYPE=${MODEL_TYPE:-inception_imagenet}
+MODEL_TYPE=${MODEL_TYPE:-cvmodelz.InceptionV3}
 
 case $MODEL_TYPE in
-	"inception" | "inception_imagenet" | "inception_inat" )
+	"cvmodelz.InceptionV3" )
 		PARTS_INPUT_SIZE=299
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=299
@@ -12,7 +12,7 @@ case $MODEL_TYPE in
 			INPUT_SIZE=427
 		fi
 		;;
-	"resnet" )
+	"cvmodelz.ResNet50" | "cvmodelz.ResNet101" | "cvmodelz.ResNet152" )
 		PARTS_INPUT_SIZE=224
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=224
@@ -30,3 +30,4 @@ OPTS="${OPTS} --model_type ${MODEL_TYPE}"
 OPTS="${OPTS} --input_size ${INPUT_SIZE}"
 OPTS="${OPTS} --parts_input_size ${PARTS_INPUT_SIZE}"
 OPTS="${OPTS} --pooling ${FINAL_POOLING}"
+OPTS="${OPTS} --load_strict"

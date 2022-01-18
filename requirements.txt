@@ -3,7 +3,7 @@ cvdatasets~=0.8
 cvfinetune>=0.5,<0.5.6
 chainer-addons>=0.8,<0.9.2
 
-chainer~=6.7
+chainer~=7.7
 chainercv~=0.13
 chainercv2~=0.0.55
 

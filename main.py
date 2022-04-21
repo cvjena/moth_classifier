@@ -5,12 +5,15 @@ import chainer
 import logging
 import matplotlib
 import numpy as np
+import pyaml
 matplotlib.use('Agg')
 
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
 from cvfinetune.finetuner import FinetunerFactory
-from cvfinetune.training.trainer import SacredTrainer
+from cvfinetune.parser.utils import populate_args
+from cvfinetune.training import Trainer
+from pathlib import Path
 
 from moth_classifier.core import classifier
 from moth_classifier.core import dataset
@@ -27,26 +30,50 @@ def get_updater_params(opts):
 
 	return dict(updater_cls=cls, updater_kwargs=kwargs)
 
+def new_finetuner(opts, experiment_name):
+	mpi = opts.mode == "train" and opts.mpi
 
-def main(args, experiment_name="Moth Classifier"):
+
+	tuner_factory = FinetunerFactory.new(mpi=mpi)
+
+	tuner = tuner_factory(
+		opts=opts,
+		experiment_name=experiment_name,
+		manual_gc=True,
+
+		**classifier.get_params(opts),
+		**get_updater_params(opts),
+
+		dataset_cls=dataset.Dataset,
+		dataset_kwargs_factory=dataset.Dataset.kwargs(opts),
+	)
+
+	return tuner, tuner_factory.get("comm")
+
+def main(args, experiment_name="Moth classifier"):
+
+	if args.mode == "evaluate":
+		populate_args(args,
+			ignore=[
+				"mode", "load", "gpu",
+				"mpi", "n_jobs", "batch_size",
+				"center_crop_on_val",
+				"only_klass",
+			],
+			fc_params=[
+				"model/fc/b",
+				"model/fc6/b",
+				"model/wrapped/output/fc/b",
+			]
+		)
+
 
 	chainer.set_debug(args.debug)
+
 	if args.debug:
 		logging.warning("DEBUG MODE ENABLED!")
 
-	tuner_factory = FinetunerFactory.new(args)
-	comm = tuner_factory.get("comm")
-
-	tuner = tuner_factory(opts=args,
-		**classifier.get_params(args),
-
-		model_kwargs=dict(pooling=args.pooling),
-
-		dataset_cls=dataset.Dataset,
-		dataset_kwargs_factory=dataset.Dataset.kwargs,
-
-		**get_updater_params(args),
-	)
+	tuner, comm = new_finetuner(args, experiment_name)
 
 	logging.info("Profiling the image processing: ")
 	with tuner.train_data.enable_img_profiler():
@@ -55,22 +82,21 @@ def main(args, experiment_name="Moth Classifier"):
 
 	if args.mode == "train":
 		tuner.run(opts=args,
-			trainer_cls=SacredTrainer,
-
-			sacred_params=dict(
-				name=experiment_name,
-				comm=comm,
-				no_observer=args.no_sacred
-			)
+			trainer_cls=Trainer
 		)
 
 	elif args.mode == "evaluate":
-		assert args.load != None, \
-			"For the evaluation, load parameter must be set!"
 
+		dest_folder = Path(args.load).parent
+		eval_fname = dest_folder / "evaluation.yml"
+		if eval_fname.exists() and not args.force:
+			print(f"Evaluation file exists already, skipping \"{args.load}\"")
+			return
 		res = tuner.evaluator()
+		res = {key: float(value) for key, value in res.items()}
+		with open(eval_fname, "w") as f:
+			pyaml.dump(res, f, sort_keys=False)
 
-		import pdb; pdb.set_trace()
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")
 

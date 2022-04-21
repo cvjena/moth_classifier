@@ -20,8 +20,12 @@ class Dataset(
 	label_shift = None
 
 	@classmethod
-	def kwargs(cls, opts, subset):
-		return dict(opts=opts)
+	def kwargs(cls, opts):
+
+		def inner(subset: str) -> dict:
+			return dict(opts=opts)
+
+		return inner
 
 	def __init__(self, *args, opts, prepare, center_crop_on_val, **kwargs):
 		super(Dataset, self).__init__(*args, **kwargs)

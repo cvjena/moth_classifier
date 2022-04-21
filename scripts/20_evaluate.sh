@@ -25,5 +25,5 @@ $PYTHON $RUN_SCRIPT evaluate \
 	${DATASET} \
 	${PARTS} \
 	${OPTS} \
-	$@
+	$@ && cat $(dirname ${LOAD})/evaluation.yml
 

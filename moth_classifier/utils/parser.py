@@ -4,7 +4,10 @@ from cvargparse import BaseParser
 from cvfinetune.parser import FineTuneParser
 
 def add_evaluation_args(parser: BaseParser):
-	pass
+	parser.add_args([
+		Arg("--force", action="store_true",
+			help="forces evaluation even if the evaluation output file already exists"),
+	], group_name="Evaluation arguments")
 
 def add_training_args(parser: BaseParser):
 

@@ -15,6 +15,11 @@ def _mean(arrays):
 	return F.mean(F.stack(arrays, axis=0), axis=0)
 
 def get_params(opts):
+	model_kwargs = dict(pooling=opts.pooling)
+
+	if hasattr(opts, "n_classes"):
+		model_kwargs["n_classes"] = opts.n_classes
+
 	kwargs = dict(only_head=opts.only_head)
 	if opts.parts == "GLOBAL":
 		cls = GlobalClassifier
@@ -23,7 +28,12 @@ def get_params(opts):
 		cls = PartsClassifier
 		kwargs["concat_features"] = opts.concat_features
 
-	return dict(classifier_cls=cls, classifier_kwargs=kwargs)
+	return dict(
+		classifier_cls=cls,
+		classifier_kwargs=kwargs,
+
+		model_kwargs=model_kwargs,
+	)
 
 class OnlyHeadMixin(abc.ABC):
 

@@ -10,14 +10,14 @@ if [[ ${ONLY_HEAD:-0} == 1 ]]; then
 	_output_subdir="/only_clf"
 fi
 
-OPTIMIZER=${OPTIMIZER:-rmsprop}
+OPTIMIZER=${OPTIMIZER:-adam}
 BATCH_SIZE=${BATCH_SIZE:-32}
 UPDATE_SIZE=${UPDATE_SIZE:-64}
 
 # >>> LR definition >>>
 LR_INIT=${LR_INIT:-1e-4}
 LR_DECAY=${LR_DECAY:-1e-1}
-LR_STEP=${LR_STEP:-20}
+LR_STEP=${LR_STEP:-1000}
 LR_TARGET=${LR_TARGET:-1e-6}
 LR=${LR:-"-lr ${LR_INIT} -lrd ${LR_DECAY} -lrs ${LR_STEP} -lrt ${LR_TARGET}"}
 # >>>>>>>>>>>>>>>>>>>>>

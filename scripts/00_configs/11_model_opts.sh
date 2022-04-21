@@ -6,7 +6,9 @@ MODEL_TYPE=${MODEL_TYPE:-cvmodelz.InceptionV3}
 PRE_TRAINING=${PRE_TRAINING:-inat}
 
 case $MODEL_TYPE in
-	"cvmodelz.InceptionV3" )
+	"cvmodelz.InceptionV3" | \
+	"chainercv2.inceptionv3" \
+	)
 		PARTS_INPUT_SIZE=299
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=299
@@ -14,8 +16,13 @@ case $MODEL_TYPE in
 			INPUT_SIZE=427
 		fi
 		;;
-	"cvmodelz.ResNet50" | "cvmodelz.ResNet101" | "cvmodelz.ResNet152" | \
-	"chainercv2.resnet50" )
+	"cvmodelz.ResNet50" | \
+	"cvmodelz.ResNet101" | \
+	"cvmodelz.ResNet152" | \
+	"chainercv2.resnet18" |  \
+	"chainercv2.resnet50" |  \
+	"chainercv2.resnet101"  \
+	)
 		PARTS_INPUT_SIZE=224
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=224
@@ -23,7 +30,7 @@ case $MODEL_TYPE in
 			INPUT_SIZE=448
 		fi
 		;;
-	"efficientnet" )
+	"chainercv2.efficientnet" )
 		PARTS_INPUT_SIZE=380
 		INPUT_SIZE=380
 		;;
@@ -34,4 +41,4 @@ OPTS="${OPTS} --input_size ${INPUT_SIZE}"
 OPTS="${OPTS} --parts_input_size ${PARTS_INPUT_SIZE}"
 OPTS="${OPTS} --pooling ${FINAL_POOLING}"
 OPTS="${OPTS} --load_strict"
-OPTS="${OPTS} --pre_training ${PRE_TRAINING}"
+OPTS="${OPTS} --pretrained_on ${PRE_TRAINING}"

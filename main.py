@@ -12,11 +12,11 @@ from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
 from cvfinetune.finetuner import FinetunerFactory
 from cvfinetune.parser.utils import populate_args
-from cvfinetune.training import Trainer
 from pathlib import Path
 
 from moth_classifier.core import classifier
 from moth_classifier.core import dataset
+from moth_classifier.core.training import Trainer
 from moth_classifier.utils import parser
 
 def get_updater_params(opts):
@@ -89,14 +89,9 @@ def main(args, experiment_name="Moth classifier"):
 
 		dest_folder = Path(args.load).parent
 		eval_fname = dest_folder / "evaluation.yml"
-		if eval_fname.exists() and not args.force:
-			print(f"Evaluation file exists already, skipping \"{args.load}\"")
-			return
-		res = tuner.evaluator()
-		res = {key: float(value) for key, value in res.items()}
-		with open(eval_fname, "w") as f:
-			pyaml.dump(res, f, sort_keys=False)
 
+		tuner.evaluate(eval_fname, force=args.force)
+		import pdb; pdb.set_trace()
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")
 

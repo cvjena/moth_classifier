@@ -14,6 +14,9 @@ def _unpack(var):
 def _mean(arrays):
 	return F.mean(F.stack(arrays, axis=0), axis=0)
 
+def _to_cpu(var):
+	return chainer.cuda.to_cpu(chainer.as_array(var))
+
 def get_params(opts):
 	model_kwargs = dict(pooling=opts.pooling)
 
@@ -54,6 +57,9 @@ def eval_prediction(pred, gt, evaluations: Dict[str, Callable], reporter):
 	for metric, func in evaluations.items():
 		reporter(**{metric: func(pred, gt)})
 
+	if chainer.config.train:
+		chainer.report({ "predictions": (_to_cpu(pred), _to_cpu(gt)) })
+
 def f1_score(pred, gt):
 	score, support = F.f1_score(pred, gt)
 	xp = score.device.xp
@@ -68,12 +74,13 @@ class GlobalClassifier(OnlyHeadMixin, classifiers.Classifier):
 		eval_prediction(pred, y,
 			evaluations=dict(
 				accuracy=self.model.accuracy,
-				f1=f1_score,
+				# f1=f1_score,
 			),
 			reporter=self.report)
 
 		loss = self.loss(pred, y)
 		self.report(loss=loss)
+
 
 		return loss
 
@@ -126,7 +133,7 @@ class PartsClassifier(OnlyHeadMixin, classifiers.SeparateModelClassifier):
 		eval_prediction(_mean_pred, y,
 			evaluations=dict(
 				accuracy=self.model.accuracy,
-				f1=f1_score,
+				# f1=f1_score,
 			),
 			reporter=self.report)
 

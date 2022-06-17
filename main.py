@@ -91,7 +91,6 @@ def main(args, experiment_name="Moth classifier"):
 		eval_fname = dest_folder / "evaluation.yml"
 
 		tuner.evaluate(eval_fname, force=args.force)
-		import pdb; pdb.set_trace()
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")
 

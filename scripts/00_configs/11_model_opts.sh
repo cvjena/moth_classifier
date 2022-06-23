@@ -5,6 +5,10 @@ MODEL_TYPE=${MODEL_TYPE:-cvmodelz.InceptionV3}
 
 PRE_TRAINING=${PRE_TRAINING:-inat}
 
+if [[ ! -z $FP16 ]]; then
+	export CHAINER_DTYPE=mixed16
+fi
+
 case $MODEL_TYPE in
 	"cvmodelz.InceptionV3" | \
 	"chainercv2.inceptionv3" \
@@ -12,6 +16,9 @@ case $MODEL_TYPE in
 		PARTS_INPUT_SIZE=299
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=299
+		elif [[ ${BIG:-0} == -1 ]]; then
+			INPUT_SIZE=107
+			PARTS_INPUT_SIZE=107
 		else
 			INPUT_SIZE=427
 		fi
@@ -26,6 +33,9 @@ case $MODEL_TYPE in
 		PARTS_INPUT_SIZE=224
 		if [[ ${BIG:-0} == 0 ]]; then
 			INPUT_SIZE=224
+		elif [[ ${BIG:-0} == -1 ]]; then
+			INPUT_SIZE=112
+			PARTS_INPUT_SIZE=112
 		else
 			INPUT_SIZE=448
 		fi

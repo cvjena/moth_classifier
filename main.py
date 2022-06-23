@@ -73,6 +73,10 @@ def main(args, experiment_name="Moth classifier"):
 	if args.debug:
 		logging.warning("DEBUG MODE ENABLED!")
 
+	args.dtype = np.empty(0, dtype=chainer.get_dtype()).dtype.name
+	logging.info(f"Default dtype: {args.dtype}")
+
+
 	tuner, comm = new_finetuner(args, experiment_name)
 
 	logging.info("Profiling the image processing: ")

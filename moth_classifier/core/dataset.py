@@ -130,6 +130,7 @@ class Dataset(
 
 	def postprocess(self, im, parts):
 
+		im = im.astype(chainer.config.dtype)
 		parts = np.array(parts, dtype=im.dtype)
 		if self.zero_mean:
 			# 0..1 -> -1..1

@@ -90,9 +90,9 @@ class EpochSummary(extension.Extension):
 		tp = np.bincount(tp_mask, minlength=n_cls + 1)[:n_cls]
 
 
-		precision = np.zeros_like(tp, dtype=chainer.config.dtype)
-		recall = np.zeros_like(tp, dtype=chainer.config.dtype)
-		fbeta_score = np.zeros_like(tp, dtype=chainer.config.dtype)
+		precision = np.zeros_like(tp, dtype=np.float32)
+		recall = np.zeros_like(tp, dtype=np.float32)
+		fbeta_score = np.zeros_like(tp, dtype=np.float32)
 
 		count_mask = counts != 0
 		relev_mask = relevant != 0

@@ -1,3 +1,5 @@
+import chainer
+
 from cvfinetune.training import Trainer as BaseTrainer
 
 from moth_classifier.core.training import extensions
@@ -8,6 +10,10 @@ class Trainer(BaseTrainer):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		ds = self.updater.get_iterator("main").dataset
+
+		if isinstance(ds, chainer.datasets.SubDataset):
+			ds = ds._dataset
+
 		max_label = ds.labels.max() - ds.label_shift
 		# self.extend(extensions.EpochSummary(max_label + 1))
 

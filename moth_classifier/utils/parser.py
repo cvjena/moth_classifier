@@ -17,9 +17,6 @@ def add_training_args(parser: BaseParser):
 			"It accumulates gradients over the training and " + \
 			"updates the weights only if the update size is exceeded"),
 
-		Arg("--mpi", action="store_true",
-			help="Indicates that OpenMPI is used!"),
-
 		Arg("--test_fold_id", type=int, default=0),
 
 	], group_name="Training arguments")

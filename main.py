@@ -5,50 +5,16 @@ import chainer
 import logging
 import matplotlib
 import numpy as np
-import pyaml
 matplotlib.use('Agg')
 
-from chainer.training.updaters import StandardUpdater
-from chainer_addons.training import MiniBatchUpdater
-from cvfinetune.finetuner import FinetunerFactory
 from cvfinetune.parser.utils import populate_args
 from pathlib import Path
 
-from moth_classifier.core import classifier
-from moth_classifier.core import dataset
+from moth_classifier.core import finetuner
 from moth_classifier.core.training import Trainer
 from moth_classifier.utils import parser
 
-def get_updater_params(opts):
-	kwargs = dict()
-	if opts.mode == "train" and opts.update_size > opts.batch_size:
-		cls = MiniBatchUpdater
-		kwargs["update_size"] = opts.update_size
 
-	else:
-		cls = StandardUpdater
-
-	return dict(updater_cls=cls, updater_kwargs=kwargs)
-
-def new_finetuner(opts, experiment_name):
-	mpi = opts.mode == "train" and opts.mpi
-
-
-	tuner_factory = FinetunerFactory.new(mpi=mpi)
-
-	tuner = tuner_factory(
-		opts=opts,
-		experiment_name=experiment_name,
-		manual_gc=True,
-
-		**classifier.get_params(opts),
-		**get_updater_params(opts),
-
-		dataset_cls=dataset.Dataset,
-		dataset_kwargs_factory=dataset.Dataset.kwargs(opts),
-	)
-
-	return tuner, tuner_factory.get("comm")
 
 def main(args, experiment_name="Moth classifier"):
 
@@ -77,12 +43,8 @@ def main(args, experiment_name="Moth classifier"):
 	logging.info(f"Default dtype: {args.dtype}")
 
 
-	tuner, comm = new_finetuner(args, experiment_name)
-
-	logging.info("Profiling the image processing: ")
-	with tuner.train_data.enable_img_profiler():
-		data = tuner.train_data
-		data[np.random.randint(len(data))]
+	tuner, comm = finetuner.new(args, experiment_name)
+	tuner.profile_images()
 
 	if args.mode == "train":
 		tuner.run(opts=args,

@@ -2,9 +2,6 @@ import chainer
 
 from cvfinetune.training import Trainer as BaseTrainer
 
-from moth_classifier.core.training import extensions
-
-
 class Trainer(BaseTrainer):
 	"""docstring for Trainer"""
 	def __init__(self, *args, **kwargs):
@@ -15,13 +12,16 @@ class Trainer(BaseTrainer):
 			ds = ds._dataset
 
 		max_label = ds.labels.max() - ds.label_shift
-		# self.extend(extensions.EpochSummary(max_label + 1))
 
 
 	def reportables(self, args):
 
 		print_values, plot_values = super().reportables(args)
 
-		print_values.extend(extensions.EpochSummary.summary_keys)
+		print_values.extend([
+			"main/prec", self.eval_name("main/prec"),
+			"main/rec", self.eval_name("main/rec"),
+			"main/f1", self.eval_name("main/f1"),
+		])
 
 		return print_values, plot_values

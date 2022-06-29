@@ -3,11 +3,12 @@ import logging
 import numpy as np
 
 from chainercv import transforms as tr
+from cvdatasets import utils
 from cvdatasets.dataset import AnnotationsReadMixin
-from cvdatasets.dataset import UniformPartMixin
 from cvdatasets.dataset import ImageProfilerMixin
 from cvdatasets.dataset import IteratorMixin
 from cvdatasets.dataset import TransformMixin
+from cvdatasets.dataset import UniformPartMixin
 from cvdatasets.utils import transforms as tr2
 
 class Dataset(
@@ -72,17 +73,27 @@ class Dataset(
 	def augmentations(self):
 		return self._train_augs if chainer.config.train else self._val_augs
 
+	def get_size(self, i, im=None) -> float:
+		px_per_mm = self._get("scale", i)
+		if im is None:
+			_im_path = self._get("image", i)
+			im = utils.read_image(_im_path, n_retries=5)
+
+		return min(im.size) / px_per_mm
+
 	def transform(self, im_obj):
 
 		im, parts, lab = self.preprocess(im_obj)
 		im, parts = self.augment(im, parts)
 		im, parts = self.postprocess(im, parts)
 
+		size = self.get_size(im_obj.uuid, im_obj.im)
+
 		if len(parts) == 0:
-			return im, lab
+			return im, lab, size
 
 		else:
-			return im, parts, lab
+			return im, parts, lab, size
 
 
 	def preprocess(self, im_obj):

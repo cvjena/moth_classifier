@@ -19,9 +19,12 @@ class Trainer(BaseTrainer):
 		print_values, plot_values = super().reportables(args)
 
 		print_values.extend([
-			"main/prec", self.eval_name("main/prec"),
-			"main/rec", self.eval_name("main/rec"),
-			"main/f1", self.eval_name("main/f1"),
+			"main/prec",
+			"main/rec",
+			"main/f1",
+			self.eval_name("main/prec"),
+			self.eval_name("main/rec"),
+			self.eval_name("main/f1"),
 		])
 
 		return print_values, plot_values

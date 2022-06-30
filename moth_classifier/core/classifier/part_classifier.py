@@ -32,7 +32,7 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		# average over the t-dimension
 		return F.mean(feats, axis=1)
 
-	def forward(self, X, parts, y, size=None):
+	def forward(self, X, parts, y, sizes=None):
 		assert X.ndim == 4 and parts.ndim == 5 , \
 			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
 		glob_feat = self._get_features(X, self.separate_model)

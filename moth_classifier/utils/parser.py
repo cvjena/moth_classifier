@@ -40,8 +40,12 @@ def parse_args(args=None, namespace=None):
 	_common_parser = FineTuneParser(add_help=False, nologging=True)
 
 	_common_parser.add_args([
-		Arg("--concat_features", action="store_true",
+		Arg.flag("--concat_features",
 			help="If set, concatenate part features instead of averaging."),
+
+		Arg.flag("--use_size_model", "-size_model",
+			help="If set, incorporate a size model fitted on the training data."),
+
 	], group_name="Model arguments")
 
 	parser = subp.add_parser("train",

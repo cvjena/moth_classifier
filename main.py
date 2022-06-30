@@ -46,6 +46,9 @@ def main(args, experiment_name="Moth classifier"):
 	tuner, comm = finetuner.new(args, experiment_name)
 	tuner.profile_images()
 
+	logging.info("Fitting size model, if possible")
+	tuner.clf.fit_size_model(tuner.train_data)
+
 	if args.mode == "train":
 		tuner.run(opts=args,
 			trainer_cls=Trainer

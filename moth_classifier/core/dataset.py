@@ -73,13 +73,20 @@ class Dataset(
 	def augmentations(self):
 		return self._train_augs if chainer.config.train else self._val_augs
 
+	@property
+	def sizes(self) -> np.ndarray:
+		sizes = list(map(self.get_size, range(len(self))))
+		return np.array(sizes, dtype=np.float32)
+
+
 	def get_size(self, i, im=None) -> float:
 		px_per_mm = self._get("scale", i)
 		if im is None:
 			_im_path = self._get("image", i)
 			im = utils.read_image(_im_path, n_retries=5)
 
-		return min(im.size) / px_per_mm
+		return np.float32(max(im.size) / px_per_mm)
+
 
 	def transform(self, im_obj):
 

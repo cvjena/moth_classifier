@@ -8,7 +8,11 @@ def get_params(opts):
 	if hasattr(opts, "n_classes"):
 		model_kwargs["n_classes"] = opts.n_classes
 
-	kwargs = dict(only_head=opts.only_head)
+	kwargs = dict(
+		only_head=opts.only_head,
+		use_size_model=opts.use_size_model
+	)
+
 	if opts.parts == "GLOBAL":
 		cls = Classifier
 

@@ -1,11 +1,16 @@
+import logging
+import wandb
+
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
-from cvfinetune import finetuner as ft
 from cvdatasets import AnnotationArgs
+from cvfinetune import finetuner as ft
+from cvfinetune.training.extensions import WandbReport
+from datetime import datetime as dt
 
+from moth_classifier.core import annotation as annot
 from moth_classifier.core import classifier
 from moth_classifier.core import dataset
-from moth_classifier.core import annotation as annot
 
 
 class MothClassifierMixin:
@@ -21,6 +26,22 @@ class MothClassifierMixin:
 		self.annot = annot.MothAnnotations.new(args, load_strict=False)
 		self.dataset_cls.label_shift = self._label_shift
 
+
+	def init_experiment(self, *, config: dict):
+		self.config = config
+
+	def run_experiment(self, *args, **kwargs):
+		if not self.no_sacred:
+			logging.info("Initializing Weights-and-biases Experiment...")
+			wandb.init(
+				project=self.experiment_name,
+				config=self.config,
+				name=str(dt.now())
+			)
+			wab_reporter = WandbReport(trigger=(1, "epoch"))
+			self.trainer.extend(wab_reporter)
+
+		return self.trainer.run(*args, **kwargs)
 
 
 class DefaultFinetuner(MothClassifierMixin, ft.DefaultFinetuner):

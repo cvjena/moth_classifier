@@ -6,13 +6,6 @@ class Trainer(BaseTrainer):
 	"""docstring for Trainer"""
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
-		ds = self.updater.get_iterator("main").dataset
-
-		if isinstance(ds, chainer.datasets.SubDataset):
-			ds = ds._dataset
-
-		max_label = ds.labels.max() - ds.label_shift
-
 
 	def reportables(self, args):
 

@@ -87,11 +87,11 @@ class Prediction:
 	def __mul(self, other):
 		if isinstance(other, (float, int)):
 			logits = list(self.logits)
-			logits[-1] *= other
+			logits[-1] = logits[-1] * other
 
 		elif isinstance(other, Prediction):
 			logits = list(self.logits)
-			logits[-1] *= other.logits[-1]
+			logits[-1] = logits[-1] * other.logits[-1]
 
 		else:
 			raise NotImplementedError

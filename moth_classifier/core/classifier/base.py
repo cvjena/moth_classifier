@@ -104,7 +104,7 @@ class BaseClassifier(abc.ABC):
 			accu_s=self.model.accuracy(size_log_probs, y),
 		)
 
-		return log_pred + size_log_probs - log_cls_weights
+		return log_pred + size_log_probs# - log_cls_weights
 
 
 class Classifier(BaseClassifier, classifiers.Classifier):

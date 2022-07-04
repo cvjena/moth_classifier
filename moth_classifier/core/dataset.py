@@ -6,7 +6,8 @@ from chainercv import transforms as tr
 from cvdatasets import utils
 from cvdatasets.dataset import AnnotationsReadMixin
 from cvdatasets.dataset import ImageProfilerMixin
-from cvdatasets.dataset import IteratorMixin
+from cvdatasets.dataset import SamplingMixin
+from cvdatasets.dataset import SamplingType
 from cvdatasets.dataset import TransformMixin
 from cvdatasets.dataset import UniformPartMixin
 from cvdatasets.utils import transforms as tr2
@@ -15,7 +16,7 @@ class Dataset(
 	ImageProfilerMixin,
 	TransformMixin,
 	UniformPartMixin,
-	IteratorMixin,
+	SamplingMixin,
 	AnnotationsReadMixin):
 
 	label_shift = None
@@ -24,7 +25,15 @@ class Dataset(
 	def kwargs(cls, opts):
 
 		def inner(subset: str) -> dict:
-			return dict(opts=opts)
+			sampling_type = None
+			# oversample and undersample should be mutually exclusive
+			if subset == "train" and opts.oversample:
+				sampling_type = SamplingType.oversample
+
+			elif subset == "train" and opts.undersample:
+				sampling_type = SamplingType.undersample
+
+			return dict(opts=opts, sampling_type=sampling_type)
 
 		return inner
 

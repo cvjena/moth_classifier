@@ -21,6 +21,10 @@ def add_training_args(parser: BaseParser):
 
 	], group_name="Training arguments")
 
+	group = parser.add_mutually_exclusive_group()
+	group.add_argument("--undersample", type=int, default=100)
+	group.add_argument("--oversample", type=int, default=10)
+
 
 	parser.add_args([
 		Arg("--no_sacred", action="store_true",

@@ -46,6 +46,9 @@ def parse_args(args=None, namespace=None):
 		Arg.flag("--use_size_model", "-size_model",
 			help="If set, incorporate a size model fitted on the training data."),
 
+		Arg.float("--loss_alpha", default=0.5,
+			help="Weight factor for the losses from the CNN and the size model."),
+
 	], group_name="Model arguments")
 
 	parser = subp.add_parser("train",

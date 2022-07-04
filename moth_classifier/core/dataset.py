@@ -27,10 +27,10 @@ class Dataset(
 		def inner(subset: str) -> dict:
 			sampling_type = None
 			# oversample and undersample should be mutually exclusive
-			if subset == "train" and opts.oversample:
+			if subset == "train" and opts.oversample > 0:
 				sampling_type = SamplingType.oversample
 
-			elif subset == "train" and opts.undersample:
+			elif subset == "train" and opts.undersample > 0:
 				sampling_type = SamplingType.undersample
 
 			return dict(opts=opts, sampling_type=sampling_type)

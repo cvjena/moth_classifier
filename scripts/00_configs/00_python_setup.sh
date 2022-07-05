@@ -34,4 +34,9 @@ else
 	PYTHON="python"
 fi
 
+if [[ ! -z $DRY_RUN ]]; then
+    echo "Dry run enabled!"
+	PYTHON="echo ${PYTHON}"
+fi
+
 RUN_SCRIPT=${RUN_SCRIPT:-"${_home}/main.py"}

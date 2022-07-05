@@ -27,21 +27,21 @@ class MothClassifierMixin:
 		self.dataset_cls.label_shift = self._label_shift
 
 
-	def init_experiment(self, *, config: dict):
-		self.config = config
+	# def init_experiment(self, *, config: dict):
+	# 	self.config = config
 
-	def run_experiment(self, *args, **kwargs):
-		if not self.no_sacred:
-			logging.info("Initializing Weights-and-biases Experiment...")
-			wandb.init(
-				project=self.experiment_name,
-				config=self.config,
-				name=str(dt.now())
-			)
-			wab_reporter = WandbReport(trigger=(1, "epoch"))
-			self.trainer.extend(wab_reporter)
+	# def run_experiment(self, *args, **kwargs):
+	# 	if not self.no_sacred:
+	# 		logging.info("Initializing Weights-and-biases Experiment...")
+	# 		wandb.init(
+	# 			project=self.experiment_name,
+	# 			config=self.config,
+	# 			name=str(dt.now())
+	# 		)
+	# 		wab_reporter = WandbReport(trigger=(1, "epoch"))
+	# 		self.trainer.extend(wab_reporter)
 
-		return self.trainer.run(*args, **kwargs)
+	# 	return self.trainer.run(*args, **kwargs)
 
 
 class DefaultFinetuner(MothClassifierMixin, ft.DefaultFinetuner):

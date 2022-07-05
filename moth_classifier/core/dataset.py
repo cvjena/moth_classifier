@@ -25,15 +25,27 @@ class Dataset(
 	def kwargs(cls, opts):
 
 		def inner(subset: str) -> dict:
-			sampling_type = None
+			sampling_type, count = None, -1
+
 			# oversample and undersample should be mutually exclusive
 			if subset == "train" and opts.oversample > 0:
 				sampling_type = SamplingType.oversample
+				count = opts.oversample
 
 			elif subset == "train" and opts.undersample > 0:
 				sampling_type = SamplingType.undersample
+				count = opts.undersample
 
-			return dict(opts=opts, sampling_type=sampling_type)
+			if sampling_type is not None:
+				logging.info(f"Added {sampling_type} with {count=}")
+
+			else:
+				logging.info(f"No over- or undersampling is added")
+
+			return dict(opts=opts,
+				        sampling_type=sampling_type,
+				        sampling_count=count
+				       )
 
 		return inner
 

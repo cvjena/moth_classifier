@@ -20,6 +20,7 @@ class MothAnnotations(FileListAnnotations):
 	def _parse_sizes(self):
 		if self.files.px_per_mm is None:
 			logging.debug("Sizes were not loaded!")
+			self.px_per_mm = np.ones(len(self.uuids), dtype=np.float32)
 			return
 
 		px_per_mm = list(map(float, self.files.px_per_mm))

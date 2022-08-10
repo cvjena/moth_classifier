@@ -24,6 +24,7 @@ LR=${LR:-"-lr ${LR_INIT} -lrd ${LR_DECAY} -lrs ${LR_STEP} -lrt ${LR_TARGET}"}
 
 DECAY=${DECAY:-5e-4}
 EPOCHS=${EPOCHS:-60}
+LABEL_SMOOTHING=${LABEL_SMOOTHING:-0.0}
 
 if [[ -z ${DATASET} ]]; then
 	echo "DATASET ist not set!"
@@ -47,6 +48,7 @@ OPTS="${OPTS} --epochs ${EPOCHS}"
 OPTS="${OPTS} --optimizer ${OPTIMIZER}"
 OPTS="${OPTS} --batch_size ${BATCH_SIZE}"
 OPTS="${OPTS} --update_size ${UPDATE_SIZE}"
+OPTS="${OPTS} --label_smoothing ${LABEL_SMOOTHING}"
 OPTS="${OPTS} --decay ${DECAY}"
 OPTS="${OPTS} --output ${OUTPUT_DIR}"
 OPTS="${OPTS} ${LR}"

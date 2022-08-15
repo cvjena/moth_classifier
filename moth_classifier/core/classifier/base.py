@@ -49,6 +49,10 @@ class BaseClassifier(abc.ABC):
 		with self.init_scope():
 			self._size_model = SizeModel(n_classes)#self.n_classes)
 
+	def load_model(self, *args, **kwargs):
+		kwargs["feat_size"] = kwargs.get("feat_size", self.output_size)
+		super().load_model(*args, **kwargs)
+
 
 	def _get_features(self, X, model):
 		if self._only_head:

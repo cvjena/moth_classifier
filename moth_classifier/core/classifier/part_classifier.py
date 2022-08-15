@@ -16,6 +16,11 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		self._concat = concat_features
 
 
+	def load_model(self, *args, **kwargs):
+		raise NotImplementedError("Handling of different feat sizes for part model and global model missing!")
+		super().load_model(*args, **kwargs)
+
+
 	@property
 	def output_size(self):
 		if self._concat:

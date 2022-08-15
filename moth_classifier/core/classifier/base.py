@@ -49,6 +49,12 @@ class BaseClassifier(abc.ABC):
 		with self.init_scope():
 			self._size_model = SizeModel(n_classes)#self.n_classes)
 
+	def load(self, weights, *args, finetune: bool, **kwargs):
+		if not finetune:
+			self.model.reinitialize_clf(self.n_classes, self.output_size)
+		super().load(weights, *args, finetune=finetune, **kwargs)
+
+
 	def load_model(self, *args, **kwargs):
 		kwargs["feat_size"] = kwargs.get("feat_size", self.output_size)
 		super().load_model(*args, **kwargs)
@@ -112,7 +118,6 @@ class BaseClassifier(abc.ABC):
 
 
 class Classifier(BaseClassifier, classifiers.Classifier):
-
 
 
 	def forward(self, X, y, sizes=None):

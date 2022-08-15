@@ -53,6 +53,8 @@ def parse_args(args=None, namespace=None):
 		Arg.float("--loss_alpha", default=0.5,
 			help="Weight factor for the losses from the CNN and the size model."),
 
+		Arg.float("--triplet_margin", "-margin", default=0.0,
+			help="If set > 0, then utilize the triplet loss")
 	], group_name="Model arguments")
 
 	parser = subp.add_parser("train",

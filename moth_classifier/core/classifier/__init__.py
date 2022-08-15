@@ -1,4 +1,5 @@
 from moth_classifier.core.classifier.base import Classifier
+from moth_classifier.core.classifier.triplet_classifier import TripletClassifier
 from moth_classifier.core.classifier.part_classifier import PartClassifier
 
 
@@ -15,7 +16,12 @@ def get_params(opts):
 	)
 
 	if opts.parts == "GLOBAL":
-		cls = Classifier
+		if opts.triplet_margin > 0:
+			cls = TripletClassifier
+			kwargs["margin"] = opts.triplet_margin
+
+		else:
+			cls = Classifier
 
 	else:
 		cls = PartClassifier

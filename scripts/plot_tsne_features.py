@@ -48,6 +48,14 @@ def main(args):
 	content = np.load(args.features_file)
 	mask, data, labels = [],  [],  []
 
+	class_names = dict()
+
+	if args.class_names:
+		with open(args.class_names) as f:
+			entries = [line.strip().partition(" ") for line in f]
+
+		class_names = {int(id): name for (id, _, name) in entries}
+
 	for i, subset in enumerate(args.subsets):
 		X, y = content[f"{subset}/features"], content[f"{subset}/labels"]
 
@@ -73,7 +81,23 @@ def main(args):
 
 		for cls in np.unique(y):
 			c, m = cols_markers[cls]
-			ax.scatter(*x[y == cls].T, c=c, marker=m)
+
+			x_cls = x[y == cls]
+
+			ax.scatter(*x_cls.T, c=c, marker=m)
+
+			if cls not in class_names:
+				continue
+			name = class_names[cls]
+
+			if args.class_name_filter and args.class_name_filter.lower() not in name.lower():
+				continue
+
+			ax.text(*x_cls.mean(axis=0), s=name,
+				ha="center",
+				va="center",
+				backgroundcolor="#00808055")
+
 
 
 	plt.show()
@@ -85,6 +109,8 @@ parser = BaseParser()
 parser.add_args([
 	Arg("features_file"),
 	Arg("--subsets", nargs="+", default=["train"]),
+	Arg("--class_names", "-names"),
+	Arg("--class_name_filter", "-name_filter"),
 ])
 
 main(parser.parse_args())

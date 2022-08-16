@@ -69,10 +69,13 @@ class TripletClassifier(Classifier):
 	def output_size(self):
 		return self._emb_size
 
+	def extract(self, X):
+		feat = self._get_features(X, self.model)
+		return self.embedding(feat)
+
 
 	def forward(self, X, y, sizes=None):
-		feat = self._get_features(X, self.model)
-		emb = self.embedding(feat)
+		emb = self.extract(X)
 		pred = self.model.clf_layer(emb)
 
 		ce_loss = self.loss(pred, y)

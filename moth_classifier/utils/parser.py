@@ -9,6 +9,10 @@ def add_evaluation_args(parser: BaseParser):
 			help="forces evaluation even if the evaluation output file already exists"),
 	], group_name="Evaluation arguments")
 
+
+def add_extraction_args(parser: BaseParser):
+	pass
+
 def add_training_args(parser: BaseParser):
 
 	parser.add_args([
@@ -68,5 +72,11 @@ def parse_args(args=None, namespace=None):
 		parents=[_common_parser])
 
 	add_evaluation_args(parser)
+
+	parser = subp.add_parser("extract",
+		help="Extract features for a trained model",
+		parents=[_common_parser])
+
+	add_extraction_args(parser)
 
 	return main_parser.parse_args(args=args, namespace=namespace)

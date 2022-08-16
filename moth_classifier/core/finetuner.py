@@ -1,12 +1,16 @@
+import chainer
+import numpy as np
 import logging
 import wandb
 
+from chainer.backends.cuda import to_cpu
 from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
 from cvdatasets import AnnotationArgs
 from cvfinetune import finetuner as ft
 from cvfinetune.training.extensions import WandbReport
 from datetime import datetime as dt
+from tqdm import tqdm
 
 from moth_classifier.core import annotation as annot
 from moth_classifier.core import classifier
@@ -26,22 +30,42 @@ class MothClassifierMixin:
 		self.annot = annot.MothAnnotations.new(args, load_strict=False)
 		self.dataset_cls.label_shift = self._label_shift
 
+	def extract_to(self, features_file):
+		subsets = (("train", self.train_data), ("val", self.val_data))
+		kwargs = dict(
+			repeat=False,
+			shuffle=False,
+			n_jobs=self._n_jobs,
+			batch_size=self._batch_size)
 
-	# def init_experiment(self, *, config: dict):
-	# 	self.config = config
+		converter = self.evaluator.converter
+		device = self.device
+		clf = self.clf
 
-	# def run_experiment(self, *args, **kwargs):
-	# 	if not self.no_sacred:
-	# 		logging.info("Initializing Weights-and-biases Experiment...")
-	# 		wandb.init(
-	# 			project=self.experiment_name,
-	# 			config=self.config,
-	# 			name=str(dt.now())
-	# 		)
-	# 		wab_reporter = WandbReport(trigger=(1, "epoch"))
-	# 		self.trainer.extend(wab_reporter)
+		data = dict()
 
-	# 	return self.trainer.run(*args, **kwargs)
+		for subset, ds in subsets:
+			it, n = self.new_iterator(ds, **kwargs)
+			desc = f"{subset=}"
+			feats, labs = np.zeros((len(ds), clf.output_size), dtype=np.float32), np.zeros(len(ds), dtype=np.int32)
+
+			for i, batch in enumerate(tqdm(it, total=n, desc=desc)):
+				X, y, *_ = converter(batch, device)
+				i0 = i * self._batch_size
+
+				with clf.eval_mode():
+					f = clf.extract(X)
+
+				f = to_cpu(chainer.as_array(f))
+				y = to_cpu(chainer.as_array(y))
+				feats[i0: i0 + len(f)] = f
+				labs[i0: i0 + len(y)] = y
+
+			data[f"{subset}/features"] = feats
+			data[f"{subset}/labels"] = labs
+
+		logging.info(f"Saving features to {features_file}")
+		np.savez(features_file, **data)
 
 
 class DefaultFinetuner(MothClassifierMixin, ft.DefaultFinetuner):

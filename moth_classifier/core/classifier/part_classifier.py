@@ -37,11 +37,11 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		# average over the t-dimension
 		return F.mean(feats, axis=1)
 
-	def forward(self, X, parts, y, sizes=None):
-		assert X.ndim == 4 and parts.ndim == 5 , \
-			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
+	def extract(self, X, parts=None):
 		glob_feat = self._get_features(X, self.separate_model)
-		glob_pred = self.separate_model.clf_layer(glob_feat)
+
+		if parts is None:
+			return glob_feat, []
 
 		part_feats = []
 		for part in parts.transpose(1,0,2,3,4):
@@ -51,6 +51,17 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		# stack over the t-dimension
 		part_feats = F.stack(part_feats, axis=1)
 		part_feats = self._encode_parts(part_feats)
+
+		return glob_feat, part_feats
+
+
+	def forward(self, X, parts, y, sizes=None):
+		assert X.ndim == 4 and parts.ndim == 5 , \
+			f"Dimensionality of inputs was incorrect ({X.ndim=}, {parts.ndim=})!"
+
+		glob_feat, part_feats = self.extract(X, parts)
+
+		glob_pred = self.separate_model.clf_layer(glob_feat)
 		part_pred = self.model.clf_layer(part_feats)
 
 		glob_loss, glob_accu = self.loss(glob_pred, y), self.separate_model.accuracy(glob_pred, y)

@@ -70,6 +70,8 @@ class BaseClassifier(abc.ABC):
 
 		return _unpack(features)
 
+	def extract(self, X):
+		return self._get_features(X, self.model)
 
 	@contextmanager
 	def eval_mode(self):
@@ -128,7 +130,7 @@ class Classifier(BaseClassifier, classifiers.Classifier):
 
 
 	def forward(self, X, y, sizes=None):
-		feat = self._get_features(X, self.model)
+		feat = self.extract(X)
 
 		pred = self.model.clf_layer(feat)
 		loss0 = self.loss(pred, y)

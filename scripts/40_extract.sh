@@ -10,16 +10,15 @@ if [[ $error != 0 ]]; then
 	exit $error
 fi
 
-echo "Evaluating"
+echo "Extracting features..."
 
 OPTS="${OPTS} --load_strict"
 OPTS="${OPTS} --load_path model/"
 
 
-$PYTHON $RUN_SCRIPT evaluate \
+$PYTHON $RUN_SCRIPT extract \
 	${DATA} \
 	${DATASET} \
 	${PARTS} \
 	${OPTS} \
-	$@ && cat $(dirname ${LOAD})/evaluation.yml
-
+	$@

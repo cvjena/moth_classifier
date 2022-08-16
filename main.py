@@ -18,7 +18,7 @@ from moth_classifier.utils import parser
 
 def main(args, experiment_name="Moth classifier"):
 
-	if args.mode == "evaluate":
+	if args.mode in ["evaluate", "extract"]:
 		populate_args(args,
 			ignore=[
 				"mode", "load", "gpu",
@@ -60,6 +60,12 @@ def main(args, experiment_name="Moth classifier"):
 		eval_fname = dest_folder / "evaluation.yml"
 
 		tuner.evaluate(eval_fname, force=args.force)
+
+	elif args.mode == "extract":
+		dest_folder = Path(args.load).parent
+		feats = dest_folder / "features.npz"
+
+		tuner.extract_to(feats)
 	else:
 		raise NotImplementedError(f"mode not implemented: {args.mode}")
 

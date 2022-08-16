@@ -62,7 +62,7 @@ class TripletClassifier(Classifier):
 		self._alpha = alpha
 
 		self.triplet_miner = CustomMiner(
-			margin=margin, type_of_triplets="easy"
+			margin=margin, type_of_triplets="hard"
 		)
 
 	@property
@@ -81,13 +81,18 @@ class TripletClassifier(Classifier):
 		ce_loss = self.loss(pred, y)
 		self.eval_prediction(pred, y, suffix="")
 
-		if self._alpha <= 0:
+		if not chainer.config.train or self._alpha <= 0:
 			self.report(loss=ce_loss)
 			return ce_loss
 
 		a_idx, p_idx, n_idx = self.triplet_miner(emb, y)
-		anch, pos, neg = emb[a_idx], emb[p_idx], emb[n_idx]
-		triplet_loss = reciprocal_triplet_loss(anch, pos, neg)
+
+		if len(a_idx) == 0:
+			triplet_loss = 0
+
+		else:
+			anch, pos, neg = emb[a_idx], emb[p_idx], emb[n_idx]
+			triplet_loss = reciprocal_triplet_loss(anch, pos, neg)
 
 		loss = ce_loss + self._alpha * triplet_loss
 		self.report(

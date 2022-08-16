@@ -45,6 +45,7 @@ class MothClassifierMixin:
 		data = dict()
 
 		for subset, ds in subsets:
+
 			it, n = self.new_iterator(ds, **kwargs)
 			desc = f"{subset=}"
 			feats, labs = np.zeros((len(ds), clf.output_size), dtype=np.float32), np.zeros(len(ds), dtype=np.int32)
@@ -58,6 +59,8 @@ class MothClassifierMixin:
 
 				f = to_cpu(chainer.as_array(f))
 				y = to_cpu(chainer.as_array(y))
+				y = ds._annot._orig_labels[y]
+
 				feats[i0: i0 + len(f)] = f
 				labs[i0: i0 + len(y)] = y
 

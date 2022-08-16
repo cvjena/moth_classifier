@@ -66,7 +66,7 @@ def main(args):
 	mask, data, labels = map(np.array, [mask, data, labels])
 	classes = np.unique(labels)
 
-	cols_markers = [(c, m) for (_, c, m) in zip(classes, colors, markers)]
+	cols_markers = {cls: (c, m) for (cls, c, m) in zip(classes, colors, markers)}
 	X = np.stack(data, axis=0)
 
 	tsne = TSNE(n_components=2)

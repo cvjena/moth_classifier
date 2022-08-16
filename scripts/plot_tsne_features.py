@@ -7,7 +7,10 @@ from cvargparse import Arg
 from cvargparse import BaseParser
 from itertools import cycle as cycler
 from matplotlib import pyplot as plt
-from sklearn.manifold import TSNE
+try:
+	from cuml.manifold import TSNE
+except ImportError:
+	from sklearn.manifold import TSNE
 
 colors = cycler([
     "#e6194b",
@@ -58,7 +61,7 @@ def main(args):
 	cols_markers = [(c, m) for (_, c, m) in zip(classes, colors, markers)]
 	X = np.stack(data, axis=0)
 
-	tsne = TSNE(2)
+	tsne = TSNE(n_components=2)
 	X_2d = tsne.fit_transform(X)
 
 	for i, subset in enumerate(args.subsets):

@@ -4,6 +4,7 @@ import logging
 import numpy as np
 import typing as T
 
+from contextlib import contextmanager
 from chainer import functions as F
 from cvmodelz import classifiers
 
@@ -62,12 +63,18 @@ class BaseClassifier(abc.ABC):
 
 	def _get_features(self, X, model):
 		if self._only_head:
-			with chainer.using_config("train", False), chainer.no_backprop_mode():
+			with self.eval_mode():
 				features = model(X, layer_name=model.meta.feature_layer)
 		else:
 			features = model(X, layer_name=model.meta.feature_layer)
 
 		return _unpack(features)
+
+
+	@contextmanager
+	def eval_mode(self):
+		with chainer.using_config("train", False), chainer.no_backprop_mode():
+			yield
 
 
 	def eval_prediction(self, pred, gt, suffix=""):

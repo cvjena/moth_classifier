@@ -2,15 +2,19 @@
 if __name__ != '__main__': raise Exception("Do not import me!")
 
 import numpy as np
+import logging
 
 from cvargparse import Arg
 from cvargparse import BaseParser
 from itertools import cycle as cycler
 from matplotlib import pyplot as plt
+
 try:
 	from cuml.manifold import TSNE
+	from cuml.decomposition import PCA
 except ImportError:
 	from sklearn.manifold import TSNE
+	from sklearn.decomposition import PCA
 
 colors = cycler([
     "#e6194b",
@@ -56,8 +60,13 @@ def main(args):
 
 		class_names = {int(id): name for (id, _, name) in entries}
 
+
 	for i, subset in enumerate(args.subsets):
 		X, y = content[f"{subset}/features"], content[f"{subset}/labels"]
+
+		logging.info(f"=== Subset: {subset} ===")
+		logging.info(f"Found {len(y):,d} samples")
+		logging.info(f"with {len(np.unique(y)):,d} classes")
 
 		data.extend(X)
 		mask.extend(np.full(len(y), i, dtype=np.int32))
@@ -65,39 +74,62 @@ def main(args):
 
 	mask, data, labels = map(np.array, [mask, data, labels])
 	classes = np.unique(labels)
-
 	cols_markers = {cls: (c, m) for (cls, c, m) in zip(classes, colors, markers)}
-	X = np.stack(data, axis=0)
 
-	tsne = TSNE(n_components=2)
-	X_2d = tsne.fit_transform(X)
+	logging.info(f"=== Overall ===")
+	logging.info(f"Found {len(labels):,d} samples")
+	logging.info(f"with {len(classes):,d} classes")
+
+	common_cls_mask = np.ones_like(classes, dtype=bool)
+	for i, subset in enumerate(args.subsets):
+		cls_i = np.unique(labels[mask == i])
+		common_cls_mask &= np.in1d(classes, cls_i)
+
+	# X_2d = PCA(n_components=2).fit_transform(data)
+	X_2d = TSNE(n_components=2).fit_transform(data)
+
+	ncols = int(np.ceil(np.sqrt(len(args.subsets))))
+	nrows = int(np.ceil(len(args.subsets) / ncols))
+	fig, axs = plt.subplots(nrows, ncols, squeeze=False)
+	fig.suptitle(args.features_file)
 
 	for i, subset in enumerate(args.subsets):
-
-		fig, ax = plt.subplots()
+		ax = axs[np.unravel_index(i, axs.shape)]
 		ax.set_title(f"Subset: {subset}")
 		x = X_2d[mask == i]
 		y = labels[mask == i]
 
-		for cls in np.unique(y):
+		classes_i = np.unique(y)
+
+		common_labs = np.in1d(y, labels)
+
+		for cls in classes_i:
 			c, m = cols_markers[cls]
 
 			x_cls = x[y == cls]
 
-			ax.scatter(*x_cls.T, c=c, marker=m)
+			alpha = 1.0
+			if not np.all(common_cls_mask) and cls in classes[common_cls_mask]:
+				alpha = 0.1
 
 			if cls not in class_names:
+				ax.scatter(*x_cls.T, c=c, marker=m, alpha=alpha)
 				continue
+
+
+
 			name = class_names[cls]
-
 			if args.class_name_filter and args.class_name_filter.lower() not in name.lower():
-				continue
+				ax.scatter(*x_cls.T, c=c, marker=m, alpha=alpha)
+			else:
+				ax.scatter(*x_cls.T, c=c, marker=m, label=name, alpha=alpha)
+				ax.text(*x_cls.mean(axis=0), s=name,
+					ha="center",
+					va="center",
+					backgroundcolor="#00808055")
 
-			ax.text(*x_cls.mean(axis=0), s=name,
-				ha="center",
-				va="center",
-				backgroundcolor="#00808055")
-
+		if args.class_name_filter:
+			ax.legend()
 
 
 	plt.show()

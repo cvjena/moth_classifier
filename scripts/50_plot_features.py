@@ -11,10 +11,11 @@ from matplotlib import pyplot as plt
 
 try:
 	from cuml.manifold import TSNE
-	from cuml.decomposition import PCA
+	tsne_module = "CuML"
 except ImportError:
 	from sklearn.manifold import TSNE
-	from sklearn.decomposition import PCA
+	tsne_module = "scikit-learn"
+
 
 colors = cycler([
     "#e6194b",
@@ -49,6 +50,8 @@ markers = cycler([
 ])
 
 def main(args):
+	logging.info(f"Imported TSNE from {tsne_module}")
+
 	content = np.load(args.features_file)
 	mask, data, labels = [],  [],  []
 

@@ -6,6 +6,7 @@ from chainer import links as L
 from chainer import functions as F
 from chainer.backends.cuda import to_cpu
 from pytorch_metric_learning.miners import TripletMarginMiner
+from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 from moth_classifier.core.classifier.base import Classifier
 
@@ -26,7 +27,10 @@ class CustomMiner(TripletMarginMiner):
 		ref_emb = as_torch_tensor(ref_emb)
 		ref_labels = as_torch_tensor(ref_labels)
 
-		result = super().forward(embeddings, labels, ref_emb, ref_labels)
+		if self.margin is None:
+	        result = lmu.get_all_triplets_indices(labels, ref_labels)
+		else:
+			result = super().forward(embeddings, labels, ref_emb, ref_labels)
 
 		return [tensor.cpu().numpy() for tensor in result]
 
@@ -99,6 +103,7 @@ class TripletClassifier(Classifier):
 			loss=loss,
 			ce_loss=ce_loss,
 			triplet_loss=triplet_loss,
+			n_triplets=len(a_idx),
 		)
 
 

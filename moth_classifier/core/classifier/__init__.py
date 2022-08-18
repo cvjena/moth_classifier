@@ -16,9 +16,10 @@ def get_params(opts):
 	)
 
 	if opts.parts == "GLOBAL":
-		if opts.triplet_margin > 0:
+		if opts.triplet_margin is not None:
+			margin = opts.triplet_margin
 			cls = TripletClassifier
-			kwargs["margin"] = opts.triplet_margin
+			kwargs["margin"] = margin if margin > 0 else None
 
 		else:
 			cls = Classifier

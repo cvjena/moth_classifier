@@ -20,6 +20,7 @@ def get_params(opts):
 			margin = opts.triplet_margin
 			cls = TripletClassifier
 			kwargs["margin"] = margin if margin > 0 else None
+			kwargs["alpha"] = args.triplet_alpha
 
 		else:
 			cls = Classifier

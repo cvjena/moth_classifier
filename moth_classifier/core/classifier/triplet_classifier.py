@@ -28,7 +28,7 @@ class CustomMiner(TripletMarginMiner):
 		ref_labels = as_torch_tensor(ref_labels)
 
 		if self.margin is None:
-	        result = lmu.get_all_triplets_indices(labels, ref_labels)
+			result = lmu.get_all_triplets_indices(labels, ref_labels)
 		else:
 			result = super().forward(embeddings, labels, ref_emb, ref_labels)
 

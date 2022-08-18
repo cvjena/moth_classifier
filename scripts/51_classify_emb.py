@@ -39,7 +39,7 @@ class Features:
 		self._subset = subset
 
 		logging.info(f"=== Subset: {subset} ===")
-		logging.info(f"{len(self._labs):,d} samples")
+		logging.info(f"{len(self._labs):,d} samples {self._feats.shape}")
 		logging.info(f"{len(self._classes):,d} classes")
 
 	def get_data(self):

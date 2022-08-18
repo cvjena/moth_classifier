@@ -11,9 +11,11 @@ from matplotlib import pyplot as plt
 
 try:
 	from cuml.manifold import TSNE
+	from cuml.decomposition import PCA
 	tsne_module = "CuML"
 except ImportError:
 	from sklearn.manifold import TSNE
+	from sklearn.decomposition import PCA
 	tsne_module = "scikit-learn"
 
 
@@ -68,7 +70,7 @@ def main(args):
 		X, y = content[f"{subset}/features"], content[f"{subset}/labels"]
 
 		logging.info(f"=== Subset: {subset} ===")
-		logging.info(f"Found {len(y):,d} samples")
+		logging.info(f"Found {len(y):,d} samples {X.shape}")
 		logging.info(f"with {len(np.unique(y)):,d} classes")
 
 		data.extend(X)
@@ -87,6 +89,9 @@ def main(args):
 	for i, subset in enumerate(args.subsets):
 		cls_i = np.unique(labels[mask == i])
 		common_cls_mask &= np.in1d(classes, cls_i)
+
+	if args.pca_dim > 2:
+		data = PCA(n_components=args.pca_dim).fit_transform(data)
 
 	# X_2d = PCA(n_components=2).fit_transform(data)
 	X_2d = TSNE(n_components=2).fit_transform(data)
@@ -146,6 +151,7 @@ parser.add_args([
 	Arg("--subsets", nargs="+", default=["train"]),
 	Arg("--class_names", "-names"),
 	Arg("--class_name_filter", "-name_filter"),
+	Arg.int("--pca_dim", "-pca", default=-1),
 ])
 
 main(parser.parse_args())

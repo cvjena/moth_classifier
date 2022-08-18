@@ -48,7 +48,10 @@ class MothClassifierMixin:
 
 			it, n = self.new_iterator(ds, **kwargs)
 			desc = f"{subset=}"
-			feats, labs = np.zeros((len(ds), clf.output_size), dtype=np.float32), np.zeros(len(ds), dtype=np.int32)
+			feats = np.zeros((len(ds), clf.output_size), dtype=np.float32)
+			labs = np.zeros(len(ds), dtype=np.int32)
+
+			logging.info(f"{subset} features: {feats.shape}")
 
 			for i, batch in enumerate(tqdm(it, total=n, desc=desc)):
 				X, y, *_ = converter(batch, device)

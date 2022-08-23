@@ -11,7 +11,11 @@ def add_evaluation_args(parser: BaseParser):
 
 
 def add_extraction_args(parser: BaseParser):
-	pass
+
+	parser.add_args([
+		Arg("--suffix",
+			help="if set, this suffix will be appended to the features file"),
+	], group_name="Feature extraction arguments")
 
 def add_training_args(parser: BaseParser):
 

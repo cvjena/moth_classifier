@@ -63,7 +63,10 @@ def main(args, experiment_name="Moth classifier"):
 
 	elif args.mode == "extract":
 		dest_folder = Path(args.load).parent
-		feats = dest_folder / "features.npz"
+		if args.suffix:
+			feats = dest_folder / f"features.{args.suffix}.npz"
+		else:
+			feats = dest_folder / "features.npz"
 
 		tuner.extract_to(feats)
 	else:

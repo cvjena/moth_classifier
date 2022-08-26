@@ -21,7 +21,7 @@ def main(args, experiment_name="Moth classifier"):
 	if args.mode in ["evaluate", "extract"]:
 		populate_args(args,
 			ignore=[
-				"mode", "load", "gpu",
+				"mode", "load", "load_path", "gpu",
 				"mpi", "n_jobs", "batch_size",
 				"center_crop_on_val",
 				"only_klass",
@@ -36,6 +36,7 @@ def main(args, experiment_name="Moth classifier"):
 
 	chainer.set_debug(args.debug)
 
+	chainer.backends.cuda.set_max_workspace_size(256*1024**2) # 256MiB
 	if args.debug:
 		logging.warning("DEBUG MODE ENABLED!")
 

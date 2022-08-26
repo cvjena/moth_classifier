@@ -30,7 +30,7 @@ fi
 } || { # catch
 
 	if [[ ${VACUUM} == 1 ]]; then
-		echo "Error occured! Removing ${OUTPUT_DIR}"
+		echo "Error occured (${?})! Removing ${OUTPUT_DIR}"
 		rm -r ${OUTPUT_DIR}
 	fi
 }

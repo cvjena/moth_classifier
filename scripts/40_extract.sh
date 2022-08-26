@@ -12,7 +12,6 @@ fi
 
 echo "Extracting features..."
 
-OPTS="${OPTS} --load_strict"
 OPTS="${OPTS} --load_path model/"
 
 

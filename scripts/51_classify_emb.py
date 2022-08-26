@@ -168,7 +168,7 @@ def update_clf(clf, features: Features, *,
 	remaining[selected] = False
 
 	if ignored != 0:
-		logging.info(f"Ignored {ignored} classes during update (to few samples)")
+		logging.info(f"Ignored {ignored} classes during update (too few samples)")
 
 	return Features(X[remaining], y[remaining], f"{features._subset} updated")
 

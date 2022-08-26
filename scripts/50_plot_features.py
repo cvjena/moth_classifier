@@ -51,6 +51,9 @@ markers = cycler([
 	# "1",
 ])
 
+def name_matches(name, name_filter) -> bool:
+	return not name_filter or name_filter.lower() in name.lower()
+
 def main(args):
 	logging.info(f"Imported TSNE from {tsne_module}")
 
@@ -101,6 +104,8 @@ def main(args):
 	fig, axs = plt.subplots(nrows, ncols, squeeze=False)
 	fig.suptitle(args.features_file)
 
+	legend_fig = None
+
 	for i, subset in enumerate(args.subsets):
 		ax = axs[np.unravel_index(i, axs.shape)]
 		ax.set_title(f"Subset: {subset}")
@@ -111,6 +116,7 @@ def main(args):
 
 		common_labs = np.in1d(y, labels)
 
+		has_labels = False
 		for cls in classes_i:
 			c, m = cols_markers[cls]
 
@@ -124,22 +130,33 @@ def main(args):
 				ax.scatter(*x_cls.T, c=c, marker=m, alpha=alpha)
 				continue
 
-
-
 			name = class_names[cls]
-			if args.class_name_filter and args.class_name_filter.lower() not in name.lower():
-				ax.scatter(*x_cls.T, c=c, marker=m, alpha=alpha)
-			else:
-				ax.scatter(*x_cls.T, c=c, marker=m, label=name, alpha=alpha)
+			label = f"{cls} | {name}"
+			has_labels = True
+
+			if name_matches(name, args.class_name_filter):
 				ax.text(*x_cls.mean(axis=0), s=name,
 					ha="center",
 					va="center",
 					backgroundcolor="#00808055")
+			# else:
+			# 	alpha = 0.1
+
+			ax.scatter(*x_cls.T, c=c, marker=m, label=label, alpha=alpha)
+
+		if has_labels and legend_fig is None:
+			legend_fig = plt.figure()
+			ax_lines, ax_labels = ax.get_legend_handles_labels()
+			legend_fig.legend(ax_lines, ax_labels, ncol=3)
 
 		if args.class_name_filter:
-			ax.legend()
+			ax_lines, ax_labels = ax.get_legend_handles_labels()
+			idxs = [i for i, name in enumerate(ax_labels) if name_matches(name, args.class_name_filter)]
+			ax_lines, ax_labels = [np.array(l)[idxs] for l in [ax_lines, ax_labels]]
+			ax.legend(ax_lines, ax_labels)
 
 
+	plt.tight_layout()
 	plt.show()
 	plt.close()
 
@@ -148,7 +165,7 @@ parser = BaseParser()
 
 parser.add_args([
 	Arg("features_file"),
-	Arg("--subsets", nargs="+", default=["train"]),
+	Arg("--subsets", nargs="+", default=["train", "val"]),
 	Arg("--class_names", "-names"),
 	Arg("--class_name_filter", "-name_filter"),
 	Arg.int("--pca_dim", "-pca", default=-1),

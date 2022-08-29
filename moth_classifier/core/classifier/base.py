@@ -8,7 +8,10 @@ from contextlib import contextmanager
 from chainer import functions as F
 from cvmodelz import classifiers
 
-from moth_classifier.core.classifier.prediction import Prediction
+from moth_classifier.core.classifier.prediction import PredictionAccumulator
+from moth_classifier.core.classifier.prediction import Precision
+from moth_classifier.core.classifier.prediction import Recall
+from moth_classifier.core.classifier.prediction import FScore
 from moth_classifier.core.classifier.size_model import SizeModel
 from moth_classifier.core.dataset import Dataset
 
@@ -16,7 +19,7 @@ from moth_classifier.core.dataset import Dataset
 def _unpack(var):
 	return var[0] if isinstance(var, tuple) else var
 
-def eval_prediction(pred, gt,
+def run_evaluations(pred, gt,
 					evaluations: T.Dict[str, T.Callable],
 					*,
 					suffix: str,
@@ -34,6 +37,8 @@ class BaseClassifier(abc.ABC):
 		self._only_head = only_head
 		self._use_size_model = use_size_model
 
+		self.init_accumulators()
+
 		with self.init_scope():
 			# use 1.0 as default setting for the loss scaling
 			self.add_persistent("loss_alpha", 1.0)
@@ -49,6 +54,18 @@ class BaseClassifier(abc.ABC):
 
 		with self.init_scope():
 			self._size_model = SizeModel(n_classes)#self.n_classes)
+
+
+	def init_accumulators(self) -> None:
+		self._accumulators = {
+			"train": PredictionAccumulator(),
+			"val": PredictionAccumulator(),
+		}
+
+	@property
+	def accumulator(self) -> PredictionAccumulator:
+		mode = "train" if chainer.config.train else "val"
+		return self._accumulators[mode]
 
 	def load(self, weights, *args, finetune: bool, **kwargs):
 		if not finetune:
@@ -81,12 +98,14 @@ class BaseClassifier(abc.ABC):
 
 	def eval_prediction(self, pred, gt, suffix=""):
 
-		return eval_prediction(pred, gt,
+		self.accumulator.update(pred, gt)
+
+		return run_evaluations(pred, gt,
 			evaluations=dict(
 				accu=self.model.accuracy,
-				prec=Prediction.precision,
-				rec=Prediction.recall,
-				f1=Prediction.f1_score,
+				prec=Precision(self.accumulator),
+				rec=Recall(self.accumulator),
+				f1=FScore(self.accumulator),
 			),
 			suffix=suffix,
 			reporter=self.report)
@@ -138,7 +157,7 @@ class Classifier(BaseClassifier, classifiers.Classifier):
 		pred = self.size_model(sizes, pred, y)
 		loss1 = self.loss(pred, y)
 
-		self.eval_prediction(pred, y, suffix="")
+		self.eval_prediction(pred, y)
 
 		loss = self.loss_alpha * loss0 + (1 - self.loss_alpha) * loss1
 		self.report(loss=loss)

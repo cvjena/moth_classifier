@@ -83,7 +83,7 @@ class TripletClassifier(Classifier):
 		pred = self.model.clf_layer(emb)
 
 		ce_loss = self.loss(pred, y)
-		self.eval_prediction(pred, y, suffix="")
+		self.eval_prediction(pred, y)
 
 		if not chainer.config.train or self._alpha <= 0:
 			self.report(loss=ce_loss)

@@ -4,16 +4,16 @@ import logging
 import numpy as np
 import typing as T
 
-from contextlib import contextmanager
 from chainer import functions as F
+from contextlib import contextmanager
 from cvmodelz import classifiers
 
-from moth_classifier.core.classifier.prediction import PredictionAccumulator
-from moth_classifier.core.classifier.prediction import Precision
-from moth_classifier.core.classifier.prediction import Recall
-from moth_classifier.core.classifier.prediction import FScore
 from moth_classifier.core.classifier.size_model import SizeModel
 from moth_classifier.core.dataset import Dataset
+from moth_classifier.core.prediction import FScore
+from moth_classifier.core.prediction import Precision
+from moth_classifier.core.prediction import PredictionAccumulator
+from moth_classifier.core.prediction import Recall
 
 
 def _unpack(var):

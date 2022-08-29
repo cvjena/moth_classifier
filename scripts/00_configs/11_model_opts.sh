@@ -23,6 +23,8 @@ case $MODEL_TYPE in
 			INPUT_SIZE=427
 		fi
 		;;
+	"cvmodelz.VGG16" | \
+	"cvmodelz.VGG19" | \
 	"cvmodelz.ResNet50" | \
 	"cvmodelz.ResNet101" | \
 	"cvmodelz.ResNet152" | \

@@ -28,15 +28,16 @@ def main(args, experiment_name="Moth classifier"):
 			],
 			fc_params=[
 				"model/fc/b",
+				"model/fc8/b",
 				"model/fc6/b",
 				"model/wrapped/output/fc/b",
 			]
 		)
 
-
 	chainer.set_debug(args.debug)
 
-	chainer.backends.cuda.set_max_workspace_size(256*1024**2) # 256MiB
+	MiB = 1024**2
+	chainer.backends.cuda.set_max_workspace_size(512 * MiB)
 	if args.debug:
 		logging.warning("DEBUG MODE ENABLED!")
 

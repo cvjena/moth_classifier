@@ -14,6 +14,8 @@ from tabulate import tabulate
 from matplotlib import pyplot as plt
 from itertools import cycle as cycler
 
+from sklearn.mixture import GaussianMixture as GMM
+
 try:
 	from cuml.manifold import TSNE
 	from cuml.neighbors import KNeighborsClassifier
@@ -97,65 +99,124 @@ def evaluate_knn(train: Features, val: Features, *, k):
 	accuracy = clf.score(X_val, y_val)
 	print(f"k-NN Accuracy: {accuracy:.2%}")
 
+def predict(X, clustering: str, *args, n_classes, eps, **kw):
 
-def evaluate_clustering(train: Features, val: Features,
-	*args,
-	markers,
-	classes,
+	if clustering == "DBSCAN":
+
+		clust = DBSCAN(eps=eps, *args, **kw)
+		clust.fit(X)
+		return clust.labels_, f"DBSCAN@{eps=}"
+
+
+	elif clustering == "KMeans":
+
+		clust = KMeans(*args, n_clusters=n_classes, **kw)
+		return clust.fit_predict(X), f"KMeans@k={n_classes}"
+
+	elif clustering == "GMM":
+
+		clust = GMM(*args,
+			n_components=n_classes,
+			covariance_type="spherical", **kw)
+		return clust.fit_predict(X), f"GMM@k={n_classes}"
+
+	else:
+		raise NotImplementedError(f"Unknown clustering: {clustering}")
+
+def evaluate(metric, X, y, pred):
+
+	if np.all(pred == 0):
+		return "n/a"
+
+	if metric == "v-measure":
+		values = metrics.homogeneity_completeness_v_measure(y, pred)
+		return "{:.2f} | {:.2f} | {:.2f}".format(*values)
+
+	elif metric == "silhoette":
+		value = metrics.silhouette_score(X, pred, metric='euclidean')
+
+	elif metric == "rand_idx":
+		value = metrics.rand_score(y, pred)
+
+	elif metric == "adj_rand_idx":
+		value = metrics.adjusted_rand_score(y, pred)
+
+	elif metric == "mi":
+		value = metrics.mutual_info_score(y, pred)
+
+	elif metric == "adj_mi":
+		value = metrics.adjusted_mutual_info_score(y, pred)
+
+	elif metric == "norm_mi":
+		value = metrics.normalized_mutual_info_score(y, pred)
+
+
+	else:
+		raise NotImplementedError(f"Unknown metric: {metric}")
+
+	return f"{value:.2f}"
+
+
+
+def evaluate_clustering(data: T.List[Features], *args,
+	markers, classes,
+	clustering,
+	metrics=["v-measure"],
 	epsilons = [2.0, 0.5],
-	**kw):
+	plot: bool = False,
+	**kwargs):
 
 	rows = []
 
-	metric = lambda true, pred: "{:.2f} | {:.2f} | {:.2f}".format(
-		*metrics.homogeneity_completeness_v_measure(true, pred))
+	fig, axs = None, None
+	if plot:
+		fig, axs = plt.subplots(nrows=len(epsilons), ncols=len(data), squeeze=False)
 
-	kw["n_clusters"] = len(classes)
+	headers = None
 
-	# metric = lambda X, preds: "{:.2f}".format(
-	# 	metrics.silhouette_score(X, preds, metric='euclidean'))
-
-	for data, subset in [(train, "train"), (val, "val")]:
-		X, y = data.get_data()
-		row = [subset]
-
-		# fig, axs = plt.subplots(ncols=len(epsilons), squeeze=False)
-		# fig.suptitle(subset)
+	for j, ds in enumerate(data):
+		X, y = ds.get_data()
+		_classes = np.unique(y)
+		row = [ds._subset]
+		_heads = ["Subset"]
 
 		for i, eps in enumerate(epsilons):
-			# clust = DBSCAN(eps=eps, *args, **kw)
-			# clust.fit(X)
-			# preds = clust.labels_
 
-			preds = KMeans(*args, **kw).fit_predict(X)
 
-			# ax = axs[np.unravel_index(i, axs.shape)]
-			# X2d = TSNE(n_components=2).fit_transform(X)
-			# for cls in classes[np.unique(preds)]:
-			# 	c, m = markers.get(cls, ("k", "."))# if cls != -1 else
+			preds, clust_name = predict(X, clustering,
+				*args, n_classes=len(_classes), eps=eps, **kwargs)
 
-			# 	if cls not in markers:
-			# 		print(cls)
-			# 	xy = X2d[preds==cls].T
-			# 	ax.scatter(*xy, c=c, marker=m)
+			if plot:
+				ax = axs[i,j]
+				X2d = TSNE(n_components=2, method="fft").fit_transform(X)
+				for cls in _classes[np.unique(preds)]:
+					c, m = markers.get(cls, ("k", "."))# if cls != -1 else
 
-			# ax.set_title(f"DBSCAN@{eps=}")
+					# if cls not in markers:
+					# 	print(cls)
 
-			# value = metric(X, preds) if (preds != -1).any() else 0
-			value = metric(y, preds) if (preds != -1).any() else 0
-			row.append(value)
+					xy = X2d[preds==cls].T
+					ax.scatter(*xy, c=c, marker=m)
 
+				ax.set_title(f"{ds._subset} | {clust_name}")
+
+			for metric in metrics:
+				score = evaluate(metric, X, y, preds)
+				row.append(score)
+				_heads.append(f"{clust_name}\n{metric}")
+
+		if headers is None:
+			headers = _heads
 		rows.append(row)
 
 	tab = tabulate(rows,
-		headers=["Subset"] + [f"DBSCAN@{eps=}" for eps in epsilons],
+		headers=headers,
 		tablefmt="fancy_grid",
 	)
 
 	print(tab)
 
-	# plt.show()
-	# plt.close()
+	return fig, axs
 
 
 
@@ -181,10 +242,30 @@ def main(args):
 
 	evaluate_knn(train, val, k=args.neighbors)
 
-	evaluate_clustering(train, val,
+	fig, axs = evaluate_clustering([train, val],
+		clustering="KMeans",
+		# clustering="GMM",
+		# clustering="DBSCAN",
 		classes=classes,
+		# epsilons=[0.5, 2.0, 5.0],
 		epsilons=[-1],
-		markers=cols_markers)
+		metrics=[
+			"v-measure",
+			"rand_idx",
+			"adj_rand_idx",
+			"mi",
+			"adj_mi",
+			"norm_mi",
+		],
+		markers=cols_markers,
+	)
+
+	if fig is not None:
+		fig.suptitle(args.embeddings)
+
+		plt.show()
+		plt.close()
+
 
 parser = GPUParser([
 	Arg("embeddings"),

@@ -97,7 +97,7 @@ def main(args):
 		data = PCA(n_components=args.pca_dim).fit_transform(data)
 
 	# X_2d = PCA(n_components=2).fit_transform(data)
-	X_2d = TSNE(n_components=2).fit_transform(data)
+	X_2d = TSNE(n_components=2, method="fft").fit_transform(data)
 
 	ncols = int(np.ceil(np.sqrt(len(args.subsets))))
 	nrows = int(np.ceil(len(args.subsets) / ncols))

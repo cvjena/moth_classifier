@@ -15,6 +15,8 @@ def add_extraction_args(parser: BaseParser):
 	parser.add_args([
 		Arg("--suffix",
 			help="if set, this suffix will be appended to the features file"),
+		Arg("--cross_dataset",
+			help="if set, use this dataset instead of the dataset used during training"),
 	], group_name="Feature extraction arguments")
 
 def add_training_args(parser: BaseParser):

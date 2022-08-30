@@ -34,6 +34,9 @@ def main(args, experiment_name="Moth classifier"):
 			]
 		)
 
+		if args.cross_dataset:
+			args.dataset = args.cross_dataset
+
 	chainer.set_debug(args.debug)
 
 	MiB = 1024**2

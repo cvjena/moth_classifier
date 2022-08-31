@@ -31,6 +31,7 @@ def main(args, experiment_name="Moth classifier"):
 				"model/fc8/b",
 				"model/fc6/b",
 				"model/wrapped/output/fc/b",
+				"model/wrapped/output/fc2/b",
 			]
 		)
 

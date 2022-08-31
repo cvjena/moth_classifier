@@ -11,7 +11,8 @@ fi
 
 case $MODEL_TYPE in
 	"cvmodelz.InceptionV3" | \
-	"chainercv2.inceptionv3" \
+	"chainercv2.inceptionv3" | \
+	"chainercv2.inceptionresnetv1" \
 	)
 		PARTS_INPUT_SIZE=299
 		if [[ ${BIG:-0} == 0 ]]; then

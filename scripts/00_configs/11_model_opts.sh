@@ -31,6 +31,7 @@ case $MODEL_TYPE in
 	"cvmodelz.ResNet152" | \
 	"chainercv2.resnet18" |  \
 	"chainercv2.resnet50" |  \
+	"chainercv2.resnext50_32x4d" |  \
 	"chainercv2.resnet101"  \
 	)
 		PARTS_INPUT_SIZE=224

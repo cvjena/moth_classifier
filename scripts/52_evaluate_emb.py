@@ -117,7 +117,7 @@ def predict(X, clustering: str, *args, n_classes, eps, **kw):
 
 		clust = GMM(*args,
 			n_components=n_classes,
-			covariance_type="spherical", **kw)
+			covariance_type="diag", **kw)
 		return clust.fit_predict(X), f"GMM@k={n_classes}"
 
 	else:
@@ -243,20 +243,11 @@ def main(args):
 	evaluate_knn(train, val, k=args.neighbors)
 
 	fig, axs = evaluate_clustering([train, val],
-		clustering="KMeans",
-		# clustering="GMM",
-		# clustering="DBSCAN",
+		clustering=args.clustering,
 		classes=classes,
 		# epsilons=[0.5, 2.0, 5.0],
 		epsilons=[-1],
-		metrics=[
-			"v-measure",
-			"rand_idx",
-			"adj_rand_idx",
-			"mi",
-			"adj_mi",
-			"norm_mi",
-		],
+		metrics=args.metrics,
 		markers=cols_markers,
 	)
 
@@ -276,6 +267,25 @@ parser = GPUParser([
 	Arg.int("--seed"),
 	Arg.int("--neighbors", "-k", default=5,
 		help="Number of neighbors for k-NN"),
+
+	Arg("--clustering", default="KMeans",
+		choices=["KMeans", "GMM", "DBSCAN"]
+		),
+
+	Arg("--metrics", nargs="+",
+		default=[
+			"v-measure",
+			"adj_rand_idx",
+			"adj_mi",
+		],
+		choices=[
+			"v-measure",
+			"rand_idx",
+			"adj_rand_idx",
+			"mi",
+			"adj_mi",
+			"norm_mi",
+		])
 
 ])
 

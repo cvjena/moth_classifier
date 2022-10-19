@@ -4,6 +4,7 @@ from __future__ import annotations
 if __name__ != '__main__': raise Exception("Do not import me!")
 
 import logging
+import sys
 import numpy as np
 import typing as T
 
@@ -11,6 +12,8 @@ from cvargparse import Arg
 from cvargparse import GPUParser
 from sklearn import metrics
 from tabulate import tabulate
+from tqdm.auto import tqdm
+from tqdm.auto import trange
 from matplotlib import pyplot as plt
 from itertools import cycle as cycler
 
@@ -88,16 +91,17 @@ class Features:
 	def get_data(self):
 		return self._feats, self._labs
 
-def evaluate_knn(train: Features, val: Features, *, k):
+def evaluate_knn(train: Features, val: Features, *, k, output, rnd = None):
 	X, y = train.get_data()
 	X_val, y_val = val.get_data()
+	rnd = rnd or np.random.RandomState()
 
-	clf = KNeighborsClassifier(n_neighbors=k)
+	clf = KNeighborsClassifier(n_neighbors=k, random_state=rnd)
 
 	clf.fit(X, y)
 
 	accuracy = clf.score(X_val, y_val)
-	print(f"k-NN Accuracy: {accuracy:.2%}")
+	print(f"k-NN Accuracy ({k=}): {accuracy:.2%}", file=output)
 
 def predict(X, clustering: str, *args, n_classes, eps, **kw):
 
@@ -126,35 +130,42 @@ def predict(X, clustering: str, *args, n_classes, eps, **kw):
 def evaluate(metric, X, y, pred):
 
 	if np.all(pred == 0):
-		return "n/a"
+		return -1 #"n/a"
 
 	if metric == "v-measure":
+		raise NotImplementedError
 		values = metrics.homogeneity_completeness_v_measure(y, pred)
 		return "{:.2f} | {:.2f} | {:.2f}".format(*values)
 
 	elif metric == "silhoette":
-		value = metrics.silhouette_score(X, pred, metric='euclidean')
+		return metrics.silhouette_score(X, pred, metric='euclidean')
 
 	elif metric == "rand_idx":
-		value = metrics.rand_score(y, pred)
+		return metrics.rand_score(y, pred)
 
 	elif metric == "adj_rand_idx":
-		value = metrics.adjusted_rand_score(y, pred)
+		return metrics.adjusted_rand_score(y, pred)
 
 	elif metric == "mi":
-		value = metrics.mutual_info_score(y, pred)
+		return metrics.mutual_info_score(y, pred)
 
 	elif metric == "adj_mi":
-		value = metrics.adjusted_mutual_info_score(y, pred)
+		return metrics.adjusted_mutual_info_score(y, pred)
 
 	elif metric == "norm_mi":
-		value = metrics.normalized_mutual_info_score(y, pred)
+		return metrics.normalized_mutual_info_score(y, pred)
 
+	raise NotImplementedError(f"Unknown metric: {metric}")
 
-	else:
-		raise NotImplementedError(f"Unknown metric: {metric}")
+	# if isinstance(value, (int, float)) or np.isscalar(value):
+	# 	return f"{value:.2f}"
 
-	return f"{value:.2f}"
+	# elif len(value) == 1:
+	# 	return f"{value[0]:.2f}"
+
+	# else:
+	# 	return f"{np.mean(value):.2f} \u00B1 {np.std(value):.2f}"
+
 
 
 
@@ -163,13 +174,25 @@ def evaluate_clustering(data: T.List[Features], *args,
 	clustering,
 	metrics=["v-measure"],
 	epsilons = [2.0, 0.5],
+	n_runs: int = 1,
 	plot: bool = False,
+	output = None,
+	rnd = None,
 	**kwargs):
+
+	fig, axs = None, None
+
+	if clustering == "no":
+		return fig, axs
 
 	rows = []
 
-	fig, axs = None, None
+	rnd = rnd or np.random.RandomState()
+
 	if plot:
+		if n_runs != 1:
+			logging.warning(f"You set {n_runs=}, this will be ignored due to plotting!")
+		n_runs = 1
 		fig, axs = plt.subplots(nrows=len(epsilons), ncols=len(data), squeeze=False)
 
 	headers = None
@@ -182,9 +205,13 @@ def evaluate_clustering(data: T.List[Features], *args,
 
 		for i, eps in enumerate(epsilons):
 
+			results = []
+			for n in trange(n_runs):
+				kwargs["random_state"] = rnd.randint(2*32-1)
+				preds, clust_name = predict(X, clustering,
+					*args, n_classes=len(_classes), eps=eps, **kwargs)
 
-			preds, clust_name = predict(X, clustering,
-				*args, n_classes=len(_classes), eps=eps, **kwargs)
+				results.append(preds)
 
 			if plot:
 				ax = axs[i,j]
@@ -200,10 +227,23 @@ def evaluate_clustering(data: T.List[Features], *args,
 
 				ax.set_title(f"{ds._subset} | {clust_name}")
 
+
 			for metric in metrics:
-				score = evaluate(metric, X, y, preds)
-				row.append(score)
+				scores = [evaluate(metric, X, y, preds) for preds in results]
+
 				_heads.append(f"{clust_name}\n{metric}")
+				if n_runs != 1:
+					std = np.std(scores)
+					if np.isclose(std, 0):
+						row.append(f"{np.mean(scores):.4f}")
+					else:
+						row.append(f"{np.mean(scores):.4f} \u00B1 {std:.4f}")
+
+					_heads[-1] += f" ({n_runs=})"
+
+				else:
+					row.append(f"{scores[0]:.4f}")
+
 
 		if headers is None:
 			headers = _heads
@@ -214,13 +254,19 @@ def evaluate_clustering(data: T.List[Features], *args,
 		tablefmt="fancy_grid",
 	)
 
-	print(tab)
+	print(tab, file=output)
 
 	return fig, axs
 
 
 
 def main(args):
+
+	if args.output is None:
+		out = sys.stdout
+	else:
+		out = open(args.output, "a")
+	print(args.embeddings, file=out)
 
 	logging.info(f"Using {used_module} module")
 	rnd = np.random.RandomState(args.seed)
@@ -240,15 +286,27 @@ def main(args):
 
 	logging.info("====== Evaluation ======")
 
-	evaluate_knn(train, val, k=args.neighbors)
+	evaluate_knn(train, val, k=args.neighbors, rnd=rnd, output=out)
+
+
+	kwargs = {}
+
+	if args.clustering == "KMeans":
+		kwargs["init"] = "k-means++"
 
 	fig, axs = evaluate_clustering([train, val],
 		clustering=args.clustering,
 		classes=classes,
 		# epsilons=[0.5, 2.0, 5.0],
 		epsilons=[-1],
+		n_runs=args.n_runs,
 		metrics=args.metrics,
 		markers=cols_markers,
+
+		output=out,
+		rnd=rnd,
+
+		**kwargs
 	)
 
 	if fig is not None:
@@ -265,11 +323,12 @@ parser = GPUParser([
 	# 	help="Perform dimensionality reduction with TSNE before clustering"),
 
 	Arg.int("--seed"),
+	Arg.int("--n_runs", default=1),
 	Arg.int("--neighbors", "-k", default=5,
 		help="Number of neighbors for k-NN"),
 
 	Arg("--clustering", default="KMeans",
-		choices=["KMeans", "GMM", "DBSCAN"]
+		choices=["KMeans", "GMM", "DBSCAN", "no"]
 		),
 
 	Arg("--metrics", nargs="+",
@@ -279,13 +338,16 @@ parser = GPUParser([
 			"adj_mi",
 		],
 		choices=[
+			"silhoette",
 			"v-measure",
 			"rand_idx",
 			"adj_rand_idx",
 			"mi",
 			"adj_mi",
 			"norm_mi",
-		])
+		]),
+
+	Arg("--output"),
 
 ])
 

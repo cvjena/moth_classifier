@@ -9,11 +9,8 @@ from contextlib import contextmanager
 from cvmodelz import classifiers
 
 from moth_classifier.core.classifier.size_model import SizeModel
-from moth_classifier.core.dataset import Dataset
-from moth_classifier.core.prediction import FScore
-from moth_classifier.core.prediction import Precision
-from moth_classifier.core.prediction import PredictionAccumulator
-from moth_classifier.core.prediction import Recall
+from moth_classifier.core import dataset
+from moth_classifier.core import prediction as preds
 
 
 def _unpack(var):
@@ -56,14 +53,18 @@ class BaseClassifier(abc.ABC):
 			self._size_model = SizeModel(n_classes)#self.n_classes)
 
 
-	def init_accumulators(self) -> None:
+	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50) -> None:
 		self._accumulators = {
-			"train": PredictionAccumulator(),
-			"val": PredictionAccumulator(),
+			"train": preds.PredictionAccumulator(
+				few_shot_count=few_shot_count,
+				many_shot_count=many_shot_count),
+			"val": preds.PredictionAccumulator(
+				few_shot_count=few_shot_count,
+				many_shot_count=many_shot_count),
 		}
 
 	@property
-	def accumulator(self) -> PredictionAccumulator:
+	def accumulator(self) -> preds.PredictionAccumulator:
 		mode = "train" if chainer.config.train else "val"
 		return self._accumulators[mode]
 
@@ -99,19 +100,42 @@ class BaseClassifier(abc.ABC):
 	def eval_prediction(self, pred, gt, suffix=""):
 
 		self.accumulator.update(pred, gt)
+		accum = self.accumulator
+		evaluations = dict(
+			accu=self.model.accuracy,
+			accu2=preds.Metric(accum, key="accuracy"),
+			prec=preds.Precision(accum),
+			rec=preds.Recall(accum),
+			f1=preds.FScore(accum, beta=1),
+
+			few_count=preds.Metric(accum, key="few_shot_count"),
+			few_cls_count=preds.Metric(accum, key="few_shot_cls_count"),
+			prec_fs=preds.Metric(accum, key="precision/few-shot@20"),
+			rec_fs=preds.Metric(accum, key="recall/few-shot@20"),
+			f1_fs=preds.Metric(accum, key="f1_score/few-shot@20"),
+
+			med_count=preds.Metric(accum, key="med_shot_count"),
+			med_cls_count=preds.Metric(accum, key="med_shot_cls_count"),
+			prec_mds=preds.Metric(accum, key="precision/med-shot@20-50"),
+			rec_mds=preds.Metric(accum, key="recall/med-shot@20-50"),
+			f1_mds=preds.Metric(accum, key="f1_score/med-shot@20-50"),
+
+			many_count=preds.Metric(accum, key="many_shot_count"),
+			many_cls_count=preds.Metric(accum, key="many_shot_cls_count"),
+			prec_ms=preds.Metric(accum, key="precision/many-shot@50"),
+			rec_ms=preds.Metric(accum, key="recall/many-shot@50"),
+			f1_ms=preds.Metric(accum, key="f1_score/many-shot@50"),
+		)
+
+
 
 		return run_evaluations(pred, gt,
-			evaluations=dict(
-				accu=self.model.accuracy,
-				prec=Precision(self.accumulator),
-				rec=Recall(self.accumulator),
-				f1=FScore(self.accumulator),
-			),
+			evaluations=evaluations,
 			suffix=suffix,
 			reporter=self.report)
 
 
-	def fit_size_model(self, ds: Dataset):
+	def fit_size_model(self, ds: dataset.Dataset):
 		if not self._use_size_model:
 			return
 

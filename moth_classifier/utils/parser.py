@@ -65,7 +65,11 @@ def parse_args(args=None, namespace=None):
 			help="If set, then utilize the triplet loss. If >0, use miner considering this margin, if <=0 mine all triplets"),
 
 		Arg.float("--triplet_alpha", default=0.01,
-			help="Triplet loss weighting parameter")
+			help="Triplet loss weighting parameter"),
+
+		Arg.flag("--triplet_only",
+			help="Use only the triplet loss for training, ignore the CE loss"),
+
 	], group_name="Model arguments")
 
 	parser = subp.add_parser("train",

@@ -55,6 +55,7 @@ class TripletClassifier(Classifier):
 				 margin: float = 0.1,
 				 embedding_size: int = 128,
 				 alpha: float = 0.01,
+				 only_triplet: bool = False,
 				 **kwargs):
 
 		super().__init__(*args, **kwargs)
@@ -64,6 +65,7 @@ class TripletClassifier(Classifier):
 			self.embedding = L.Linear(self._emb_size)
 
 		self._alpha = alpha
+		self._only_triplet = only_triplet
 
 		self.triplet_miner = CustomMiner(
 			margin=margin, type_of_triplets="hard"
@@ -92,13 +94,17 @@ class TripletClassifier(Classifier):
 		a_idx, p_idx, n_idx = self.triplet_miner(emb, y)
 
 		if len(a_idx) == 0:
-			triplet_loss = 0
+			triplet_loss = chainer.Variable(self.xp.array([0]))
 
 		else:
 			anch, pos, neg = emb[a_idx], emb[p_idx], emb[n_idx]
 			triplet_loss = reciprocal_triplet_loss(anch, pos, neg)
 
-		loss = ce_loss + self._alpha * triplet_loss
+		if self._only_triplet:
+			loss = triplet_loss
+		else:
+			loss = ce_loss + self._alpha * triplet_loss
+
 		self.report(
 			loss=loss,
 			ce_loss=ce_loss,

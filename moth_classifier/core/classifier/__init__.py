@@ -21,6 +21,7 @@ def get_params(opts):
 			cls = TripletClassifier
 			kwargs["margin"] = margin if margin > 0 else None
 			kwargs["alpha"] = opts.triplet_alpha
+			kwargs["only_triplet"] = opts.triplet_only
 
 		else:
 			cls = Classifier

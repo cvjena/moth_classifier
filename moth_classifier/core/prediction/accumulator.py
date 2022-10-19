@@ -10,11 +10,18 @@ def _to_cpu(var, dtype=None):
 
 class PredictionAccumulator:
 
-	def __init__(self, logits = None, gt = None):
+	def __init__(self,
+		logits = None, gt = None, *,
+		few_shot_count: int = -1,
+		many_shot_count: int = -1):
+
 		super().__init__()
 
 		self._logits = [] if logits is None else [_to_cpu(logits, np.float16)]
 		self._gt = [] if gt is None else [_to_cpu(gt, np.int32)]
+
+		self.few_shot_count = few_shot_count
+		self.many_shot_count = many_shot_count
 
 	def update(self, logits, gt):
 
@@ -45,6 +52,10 @@ class PredictionAccumulator:
 
 		pred = logits.argmax(axis=1)
 
+		self._metrics = {
+			"accuracy": np.mean(pred == true),
+		}
+
 		counts = np.bincount(true, minlength=n_cls + 1)[:n_cls]
 		relevant = np.bincount(pred, minlength=n_cls + 1)[:n_cls]
 
@@ -69,11 +80,61 @@ class PredictionAccumulator:
 		mask = denominator != 0
 		fbeta_score[mask] = numerator[mask] / denominator[mask]
 
-		self._metrics = {
-			"precision": np.nanmean(precision[count_mask]),
-			"recall": np.nanmean(recall[count_mask]),
-			f"f{beta}_score": np.nanmean(fbeta_score[count_mask])
-		}
+		return self._calc_metrics(precision, recall, fbeta_score, counts, beta=beta)
+
+
+	def _calc_metrics(self, precision, recall, fbeta_score, counts, *, beta):
+		count_mask = counts != 0
+
+
+		prec = precision[count_mask]
+		rec = recall[count_mask]
+		fbeta = fbeta_score[count_mask]
+
+		self._metrics.update({
+			"precision": np.nanmean(prec),
+			"recall": np.nanmean(rec),
+			f"f{beta}_score": np.nanmean(fbeta),
+		})
+
+		if -1 in [self.few_shot_count, self.many_shot_count]:
+			return self._metrics
+
+		fsc = self.few_shot_count
+		msc = self.many_shot_count
+		_counts = counts[count_mask]
+		fs_mask = _counts < fsc
+		ms_mask = _counts > msc
+		mds_mask = np.logical_and(~fs_mask, ~ms_mask)
+
+		if fs_mask.sum():
+			self._metrics.update({
+				"few_shot_cls_count": fs_mask.sum(),
+				"few_shot_count": _counts[fs_mask].sum(),
+				f"precision/few-shot@{fsc}": np.nanmean(prec[fs_mask]),
+				f"recall/few-shot@{fsc}": np.nanmean(rec[fs_mask]),
+				f"f{beta}_score/few-shot@{fsc}": np.nanmean(fbeta[fs_mask]),
+			})
+
+		if mds_mask.sum():
+			self._metrics.update({
+				"med_shot_cls_count": mds_mask.sum(),
+				"med_shot_count": _counts[mds_mask].sum(),
+				f"precision/med-shot@{fsc}-{msc}": np.nanmean(prec[mds_mask]),
+				f"recall/med-shot@{fsc}-{msc}": np.nanmean(rec[mds_mask]),
+				f"f{beta}_score/med-shot@{fsc}-{msc}": np.nanmean(fbeta[mds_mask]),
+				})
+
+		if ms_mask.sum():
+			self._metrics.update({
+				"many_shot_cls_count": ms_mask.sum(),
+				"many_shot_count": _counts[ms_mask].sum(),
+				f"precision/many-shot@{msc}": np.nanmean(prec[ms_mask]),
+				f"recall/many-shot@{msc}": np.nanmean(rec[ms_mask]),
+				f"f{beta}_score/many-shot@{msc}": np.nanmean(fbeta[ms_mask]),
+			})
+
+
 		return self._metrics
 
 

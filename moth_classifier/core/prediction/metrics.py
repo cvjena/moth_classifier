@@ -53,25 +53,28 @@ class BaseMetric(abc.ABC):
 	def div(self, other, **kwargs):
 		return self._accum.calc_metrics(only_available = self._only_available, **kwargs)
 
-class Precision(BaseMetric):
+class Metric(BaseMetric):
+	def __init__(self, *args, key, **kwargs):
+		super().__init__(*args, **kwargs)
+		self._key = key
+		self._kwargs = {}
 
 	def div(self, other):
-		metrics = super().div(other)
-		return metrics.get("precision", 0)
+		metrics = super().div(other, **self._kwargs)
+		return metrics.get(self._key, 0)
 
-class Recall(BaseMetric):
+class Precision(Metric):
 
-	def div(self, other):
-		metrics = super().div(other)
-		return metrics.get("recall", 0)
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, key="precision", **kwargs)
 
-class FScore(BaseMetric):
+class Recall(Metric):
+
+	def __init__(self, *args, **kwargs):
+		super().__init__(*args, key="recall", **kwargs)
+
+class FScore(Metric):
 
 	def __init__(self, *args, beta: int = 1, **kwargs):
-		super().__init__(*args, **kwargs)
-		self._beta = beta
-
-	def div(self, other):
-		metrics = super().div(other, beta=self._beta)
-		return metrics.get(f"f{self._beta}_score", 0)
-
+		super().__init__(*args, key=f"f{beta}_score", **kwargs)
+		self._kwargs["beta"] = beta

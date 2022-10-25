@@ -81,7 +81,7 @@ def parse_args(args=None, namespace=None):
 	_common_parser.add_args([
 		Arg("--cross_dataset", "-cross",
 			help="if set, use this dataset instead of the dataset used during training"),
-	])
+	], group_name="Dataset arguments")
 
 	parser = subp.add_parser("evaluate",
 		help="Starts moth classifier evaluation",

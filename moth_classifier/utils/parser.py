@@ -79,7 +79,7 @@ def parse_args(args=None, namespace=None):
 	add_training_args(parser)
 
 	_common_parser.add_args([
-		Arg("--cross_dataset",
+		Arg("--cross_dataset", "-cross",
 			help="if set, use this dataset instead of the dataset used during training"),
 	])
 

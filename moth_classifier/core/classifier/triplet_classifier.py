@@ -94,7 +94,7 @@ class TripletClassifier(Classifier):
 		a_idx, p_idx, n_idx = self.triplet_miner(emb, y)
 
 		if len(a_idx) == 0:
-			triplet_loss = chainer.Variable(self.xp.array([0]))
+			triplet_loss = chainer.Variable(self.xp.array([0], dtype=chainer.config.dtype))
 
 		else:
 			anch, pos, neg = emb[a_idx], emb[p_idx], emb[n_idx]

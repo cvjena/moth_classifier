@@ -20,10 +20,11 @@ from itertools import cycle as cycler
 from sklearn.mixture import GaussianMixture as GMM
 
 try:
-	from cuml.manifold import TSNE
-	from cuml.neighbors import KNeighborsClassifier
-	from cuml.cluster import DBSCAN
-	from cuml.cluster import KMeans
+	from cuml import TSNE
+	from cuml import UMAP
+	from cuml import KNeighborsClassifier
+	from cuml import DBSCAN
+	from cuml import KMeans
 	used_module = "CuML"
 except ImportError as e:
 	from sklearn.manifold import TSNE
@@ -91,38 +92,50 @@ class Features:
 	def get_data(self):
 		return self._feats, self._labs
 
-def evaluate_knn(train: Features, val: Features, *, k, output, rnd = None):
+def evaluate_knn(train: Features, val: Features, *, k, output):
 	X, y = train.get_data()
 	X_val, y_val = val.get_data()
-	rnd = rnd or np.random.RandomState()
 
-	clf = KNeighborsClassifier(n_neighbors=k, random_state=rnd)
+	clf = KNeighborsClassifier(n_neighbors=k)
 
 	clf.fit(X, y)
 
 	accuracy = clf.score(X_val, y_val)
 	print(f"k-NN Accuracy ({k=}): {accuracy:.2%}", file=output)
 
-def predict(X, clustering: str, *args, n_classes, eps, **kw):
+def predict(X, clustering: str, *args, n_classes, eps, random_state, n_components: int = -1, **kw):
+
+	if n_components > 0:
+		logging.debug(f"Reducing data from {X.shape[1]} to {n_components=}")
+		reducer = TSNE if n_components == 2 else UMAP
+		X = reducer(n_components=n_components).fit_transform(X)
 
 	if clustering == "DBSCAN":
+		clust = DBSCAN(
+			min_samples=2,
+			eps=eps, *args, **kw)
+		# X = StandardScaler().fit_transform(X)
 
-		clust = DBSCAN(eps=eps, *args, **kw)
 		clust.fit(X)
-		return clust.labels_, f"DBSCAN@{eps=}"
+		labels = clust.labels_
+		k = len(set(labels)) - (1 if -1 in labels else 0)
+
+
+		return labels, f"DBSCAN@{eps=},{k=}", X
 
 
 	elif clustering == "KMeans":
 
-		clust = KMeans(*args, n_clusters=n_classes, **kw)
-		return clust.fit_predict(X), f"KMeans@k={n_classes}"
+		clust = KMeans(*args, n_clusters=n_classes, random_state=random_state, **kw)
+		return clust.fit_predict(X), f"KMeans@k={n_classes}", X
 
 	elif clustering == "GMM":
 
 		clust = GMM(*args,
 			n_components=n_classes,
+			random_state=random_state,
 			covariance_type="diag", **kw)
-		return clust.fit_predict(X), f"GMM@k={n_classes}"
+		return clust.fit_predict(X), f"GMM@k={n_classes}", X
 
 	else:
 		raise NotImplementedError(f"Unknown clustering: {clustering}")
@@ -172,11 +185,11 @@ def evaluate(metric, X, y, pred):
 def evaluate_clustering(data: T.List[Features], *args,
 	markers, classes,
 	clustering,
+	output,
 	metrics=["v-measure"],
 	epsilons = [2.0, 0.5],
 	n_runs: int = 1,
 	plot: bool = False,
-	output = None,
 	rnd = None,
 	**kwargs):
 
@@ -208,15 +221,19 @@ def evaluate_clustering(data: T.List[Features], *args,
 			results = []
 			for n in trange(n_runs):
 				kwargs["random_state"] = rnd.randint(2*32-1)
-				preds, clust_name = predict(X, clustering,
+				preds, clust_name, _X = predict(X, clustering,
 					*args, n_classes=len(_classes), eps=eps, **kwargs)
 
 				results.append(preds)
 
 			if plot:
 				ax = axs[i,j]
-				X2d = TSNE(n_components=2, method="fft").fit_transform(X)
-				for cls in _classes[np.unique(preds)]:
+				if _X.shape[1] != 2:
+					# X2d = UMAP(n_components=2).fit_transform(_X)
+					X2d = TSNE(n_components=2).fit_transform(_X)
+				else:
+					X2d = _X
+				for cls in np.unique(preds):
 					c, m = markers.get(cls, ("k", "."))# if cls != -1 else
 
 					# if cls not in markers:
@@ -286,25 +303,37 @@ def main(args):
 
 	logging.info("====== Evaluation ======")
 
-	evaluate_knn(train, val, k=args.neighbors, rnd=rnd, output=out)
+	evaluate_knn(train, val, k=args.neighbors, output=out)
 
 
 	kwargs = {}
 
+	eps = [-1]
 	if args.clustering == "KMeans":
 		kwargs["init"] = "k-means++"
+	elif args.clustering == "DBSCAN":
+		eps = [
+			# 0.05, 0.5, 1.0,
+			1.0,
+			2.0,
+			3.0,
+			# 50.0,
+			# 100.0,
+		]
 
 	fig, axs = evaluate_clustering([train, val],
 		clustering=args.clustering,
 		classes=classes,
-		# epsilons=[0.5, 2.0, 5.0],
-		epsilons=[-1],
+		epsilons=eps,
 		n_runs=args.n_runs,
 		metrics=args.metrics,
 		markers=cols_markers,
 
 		output=out,
 		rnd=rnd,
+
+		plot=args.plot,
+		n_components=args.n_components,
 
 		**kwargs
 	)
@@ -333,7 +362,7 @@ parser = GPUParser([
 
 	Arg("--metrics", nargs="+",
 		default=[
-			"v-measure",
+			# "v-measure",
 			"adj_rand_idx",
 			"adj_mi",
 		],
@@ -348,6 +377,9 @@ parser = GPUParser([
 		]),
 
 	Arg("--output"),
+	Arg.int("--n_components", "-nc", default=-1,
+		help="If positive, perform dimensionality reduction to the number of given components"),
+	Arg.flag("--plot"),
 
 ])
 

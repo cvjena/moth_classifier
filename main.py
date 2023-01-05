@@ -10,8 +10,7 @@ matplotlib.use('Agg')
 from cvfinetune.parser.utils import populate_args
 from pathlib import Path
 
-from moth_classifier.core import finetuner
-from moth_classifier.core.training import Trainer
+from moth_classifier import core
 from moth_classifier.utils import parser
 
 
@@ -49,7 +48,7 @@ def main(args, experiment_name="Moth classifier"):
 	logging.info(f"Default dtype: {args.dtype}")
 
 
-	tuner, comm = finetuner.new(args, experiment_name)
+	tuner, comm = core.finetuner.new(args, experiment_name)
 	tuner.profile_images()
 
 	logging.info("Fitting size model, if possible")
@@ -57,7 +56,7 @@ def main(args, experiment_name="Moth classifier"):
 
 	if args.mode == "train":
 		tuner.run(opts=args,
-			trainer_cls=Trainer
+			trainer_cls=core.Trainer
 		)
 
 	elif args.mode == "evaluate":

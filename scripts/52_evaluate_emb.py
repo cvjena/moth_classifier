@@ -4,20 +4,24 @@ from __future__ import annotations
 if __name__ != '__main__': raise Exception("Do not import me!")
 
 import logging
-import sys
 import numpy as np
+import sys
 import typing as T
 
 from cvargparse import Arg
 from cvargparse import GPUParser
+from itertools import cycle as cycler
+from matplotlib import pyplot as plt
+from scipy.spatial.distance import pdist
+from scipy.spatial.distance import squareform
 from sklearn import metrics
 from tabulate import tabulate
 from tqdm.auto import tqdm
 from tqdm.auto import trange
-from matplotlib import pyplot as plt
-from itertools import cycle as cycler
 
 from sklearn.mixture import GaussianMixture as GMM
+# from sklearn.metrics import pairwise_distances
+# from sklearn.preprocessing import StandardScaler
 
 try:
 	from cuml import TSNE
@@ -25,12 +29,14 @@ try:
 	from cuml import KNeighborsClassifier
 	from cuml import DBSCAN
 	from cuml import KMeans
+	from cuml import LogisticRegression
 	used_module = "CuML"
 except ImportError as e:
 	from sklearn.manifold import TSNE
 	from sklearn.neighbors import KNeighborsClassifier
 	from sklearn.cluster import DBSCAN
 	from sklearn.cluster import KMeans
+	from sklearn.linear_model import LogisticRegression
 	used_module = "scikit-learn"
 
 	print(e)
@@ -92,6 +98,17 @@ class Features:
 	def get_data(self):
 		return self._feats, self._labs
 
+def evaluate_logReg(train: Features, val: Features, *args, output, C=1.0, **kwargs):
+	X, y = train.get_data()
+	X_val, y_val = val.get_data()
+
+	clf = LogisticRegression(C=C)
+
+	clf.fit(X, y)
+
+	accuracy = clf.score(X_val, y_val)
+	print(f"log. Regression Accuracy: {accuracy:.2%}", file=output)
+
 def evaluate_knn(train: Features, val: Features, *, k, output):
 	X, y = train.get_data()
 	X_val, y_val = val.get_data()
@@ -105,7 +122,7 @@ def evaluate_knn(train: Features, val: Features, *, k, output):
 
 def predict(X, clustering: str, *args, n_classes, eps, random_state, n_components: int = -1, **kw):
 
-	if n_components > 0:
+	if n_components > 0 and X.shape[1] > n_components:
 		logging.debug(f"Reducing data from {X.shape[1]} to {n_components=}")
 		reducer = TSNE if n_components == 2 else UMAP
 		X = reducer(n_components=n_components).fit_transform(X)
@@ -168,6 +185,9 @@ def evaluate(metric, X, y, pred):
 	elif metric == "norm_mi":
 		return metrics.normalized_mutual_info_score(y, pred)
 
+	elif metric == "neigh_ap":
+		return neighborhood_ap(X, y)
+
 	raise NotImplementedError(f"Unknown metric: {metric}")
 
 	# if isinstance(value, (int, float)) or np.isscalar(value):
@@ -180,6 +200,29 @@ def evaluate(metric, X, y, pred):
 	# 	return f"{np.mean(value):.2f} \u00B1 {np.std(value):.2f}"
 
 
+def neighborhood_ap(X, y, *, metric="euclidean"):
+    N, D = X.shape
+    dists = squareform(pdist(X, metric=metric))
+    dists[np.eye(N, dtype=bool)] = np.inf
+    neighbors = dists.argsort(axis=1)
+
+    idxs = np.arange(1, N+1)
+    res = np.zeros(N, dtype=np.float32)
+    for i, (lab, neig_cls) in enumerate(zip(y, y[neighbors])):
+        # subtract itself
+        Nc = (y == lab).sum() - 1
+        if Nc == 0:
+        	# we have only one sample of this class, hence we cannot evaluate its neighbors
+        	res[i] = np.nan
+        	continue
+        recall = (neig_cls == lab).cumsum() / Nc
+        recall0 = np.hstack([[0], recall])
+        prec = (neig_cls == lab).cumsum() / idxs
+
+        AP = np.sum(prec[:-1] * (recall[:-1] - recall0[:-2]))
+        res[i] = AP
+
+    return res
 
 
 def evaluate_clustering(data: T.List[Features], *args,
@@ -210,8 +253,16 @@ def evaluate_clustering(data: T.List[Features], *args,
 
 	headers = None
 
+	# fig, axs = plt.subplots(2)
 	for j, ds in enumerate(data):
 		X, y = ds.get_data()
+
+		# dist = pairwise_distances(X)
+		# mask = np.tri(*dist.shape, k=-1).astype(bool)
+		# ax = axs[j]
+		# ax.hist(dist[mask], bins=30)
+		# ax.set_title(f"{ds._subset} distance histogram")
+
 		_classes = np.unique(y)
 		row = [ds._subset]
 		_heads = ["Subset"]
@@ -246,9 +297,17 @@ def evaluate_clustering(data: T.List[Features], *args,
 
 
 			for metric in metrics:
+				_heads.append(f"{clust_name}\n{metric}")
+
+				if metric == "neigh_ap":
+					APs = neighborhood_ap(X, y)
+					mu = np.nanmean(APs)
+					std = np.nanstd(APs)
+					row.append(f"{mu:.4f} \u00B1 {std:.4f}")
+					continue
+
 				scores = [evaluate(metric, X, y, preds) for preds in results]
 
-				_heads.append(f"{clust_name}\n{metric}")
 				if n_runs != 1:
 					std = np.std(scores)
 					if np.isclose(std, 0):
@@ -304,6 +363,7 @@ def main(args):
 	logging.info("====== Evaluation ======")
 
 	evaluate_knn(train, val, k=args.neighbors, output=out)
+	evaluate_logReg(train, val, C=1.0, output=out, class_weight="balanced")
 
 
 	kwargs = {}
@@ -315,8 +375,8 @@ def main(args):
 		eps = [
 			# 0.05, 0.5, 1.0,
 			1.0,
-			2.0,
-			3.0,
+			# 2.0,
+			# 3.0,
 			# 50.0,
 			# 100.0,
 		]
@@ -364,7 +424,8 @@ parser = GPUParser([
 		default=[
 			# "v-measure",
 			"adj_rand_idx",
-			"adj_mi",
+			# "adj_mi",
+			"neigh_ap",
 		],
 		choices=[
 			"silhoette",
@@ -373,6 +434,7 @@ parser = GPUParser([
 			"adj_rand_idx",
 			"mi",
 			"adj_mi",
+			"neigh_ap",
 			"norm_mi",
 		]),
 

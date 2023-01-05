@@ -1,0 +1,7 @@
+n_parts: 4
+classification_specific: true
+fit_object: false
+sigma: 5.0
+gamma: 0.7
+thresh_type: mean
+feature_composition: [ coords, saliency ]

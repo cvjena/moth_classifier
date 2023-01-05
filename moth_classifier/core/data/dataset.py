@@ -12,7 +12,16 @@ from cvdatasets.dataset import TransformMixin
 from cvdatasets.dataset import UniformPartMixin
 from cvdatasets.utils import transforms as tr2
 
+from cluster_parts.shortcuts.datasets import CSPartsMixin
+
+def get_params(opts):
+	return dict(
+		dataset_cls=Dataset,
+		dataset_kwargs_factory=Dataset.kwargs(opts),
+	)
+
 class Dataset(
+	CSPartsMixin,
 	ImageProfilerMixin,
 	TransformMixin,
 	UniformPartMixin,
@@ -52,7 +61,7 @@ class Dataset(
 	def __init__(self, *args, opts, prepare, center_crop_on_val, **kwargs):
 		super(Dataset, self).__init__(*args, **kwargs)
 
-		self.prepare = prepare
+		self.model_prepare = prepare
 		# for these models, we need to scale from 0..1 to -1..1
 		self.zero_mean = opts.model_type in ["cvmodelz.InceptionV3"]
 		self._setup_augmentations(opts)
@@ -110,6 +119,7 @@ class Dataset(
 
 
 	def transform(self, im_obj):
+		im_obj = self.set_parts(im_obj)
 
 		im, parts, lab = self.preprocess(im_obj)
 		im, parts = self.augment(im, parts)
@@ -127,7 +137,7 @@ class Dataset(
 	def preprocess(self, im_obj):
 		im, _, lab = im_obj.as_tuple()
 		self._profile_img(im, "before prepare")
-		im = self.prepare(im, size=self.size)
+		im = self.model_prepare(im, size=self.size)
 		self._profile_img(im, "after prepare")
 
 		lab -= (self.label_shift or 0)
@@ -138,12 +148,30 @@ class Dataset(
 			for i, part in enumerate(im_obj.visible_crops(self.ratio)):
 
 				if i == 0: self._profile_img(part, "(part) before prepare")
-				part = self.prepare(part, size=self.part_size)
+				# import pdb; pdb.set_trace()
+				part = self.model_prepare(part, size=self.part_size)
 				if i == 0: self._profile_img(part, "(part) after prepare")
 				parts.append(part)
 
 
 		return im, parts, lab
+
+	def prepare(self, im):
+		""" This separate method is required
+			for the lazy CS part estimation
+		"""
+
+		im = self.model_prepare(im, size=None)
+		with chainer.using_config("train", False):
+			for aug, params in self.augmentations:
+				im = aug(im, **params)
+
+		if self.zero_mean:
+			# 0..1 -> -1..1
+			im = im * 2 - 1
+
+		return im
+
 
 
 	def augment(self, im, parts):

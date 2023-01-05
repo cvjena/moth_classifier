@@ -72,6 +72,11 @@ def parse_args(args=None, namespace=None):
 
 	], group_name="Model arguments")
 
+	_common_parser.add_args([
+		Arg("--cs_config",
+			help="Config file with settings for the extraction of CS parts")
+	], group_name="CS Parts")
+
 	parser = subp.add_parser("train",
 		help="Starts moth classifier training",
 		parents=[_common_parser])

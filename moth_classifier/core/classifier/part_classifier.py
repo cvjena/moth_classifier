@@ -16,9 +16,16 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		self._concat = concat_features
 
 
-	def load_model(self, *args, **kwargs):
-		raise NotImplementedError("Handling of different feat sizes for part model and global model missing!")
-		super().load_model(*args, **kwargs)
+	def load_model(self, *args, finetune: bool = False, **kwargs):
+		super().load_model(*args, finetune=finetune, **kwargs)
+
+		if finetune:
+			if self.copy_mode == "share":
+				clf_name = self.model.clf_layer_name
+				new_clf = L.Linear(self.model.meta.feature_size, self.n_classes)
+				setattr(self.model, clf_name, new_clf)
+
+			self.model.reinitialize_clf(self.n_classes, self.model.meta.feature_size)
 
 
 	@property
@@ -38,14 +45,14 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		return F.mean(feats, axis=1)
 
 	def extract(self, X, parts=None):
-		glob_feat = self._get_features(X, self.separate_model)
+		glob_feat = self._get_features(X, self.model)
 
 		if parts is None:
 			return glob_feat, []
 
 		part_feats = []
 		for part in parts.transpose(1,0,2,3,4):
-			part_feat = self._get_features(part, self.model)
+			part_feat = self._get_features(part, self.separate_model)
 			part_feats.append(part_feat)
 
 		# stack over the t-dimension
@@ -61,11 +68,11 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 
 		glob_feat, part_feats = self.extract(X, parts)
 
-		glob_pred = self.separate_model.clf_layer(glob_feat)
-		part_pred = self.model.clf_layer(part_feats)
+		glob_pred = self.model.clf_layer(glob_feat)
+		part_pred = self.separate_model.clf_layer(part_feats)
 
-		glob_loss, glob_accu = self.loss(glob_pred, y), self.separate_model.accuracy(glob_pred, y)
-		part_loss, part_accu = self.loss(part_pred, y), self.model.accuracy(part_pred, y)
+		glob_loss, glob_accu = self.loss(glob_pred, y), self.model.accuracy(glob_pred, y)
+		part_loss, part_accu = self.loss(part_pred, y), self.separate_model.accuracy(part_pred, y)
 
 		_mean_pred = _mean([F.softmax(glob_pred), F.softmax(part_pred)])
 

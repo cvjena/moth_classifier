@@ -9,6 +9,10 @@ if [[ ! -z $FP16 ]]; then
 	export CHAINER_DTYPE=mixed16
 fi
 
+if [[ -z $MEAN_PART_FEATS ]]; then
+	OPTS="${OPTS} --concat_features"
+fi
+
 case $MODEL_TYPE in
 	"cvmodelz.InceptionV3" | \
 	"chainercv2.inceptionv3" | \

@@ -111,7 +111,7 @@ class MothClassifierMixin:
 		return dict(res,
 			extractor=extractor,
 			cs=opts.classification_specific,
-			model=self.model.copy(mode="copy"),
+			model=self.model,
 		)
 
 class DefaultFinetuner(MothClassifierMixin, ft.DefaultFinetuner):

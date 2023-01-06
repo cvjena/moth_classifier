@@ -58,7 +58,13 @@ class Dataset(
 
 		return inner
 
-	def __init__(self, *args, opts, prepare, center_crop_on_val, **kwargs):
+	def __init__(self, *args, opts, prepare, center_crop_on_val,
+			part_rescale_size: int = None,
+			**kwargs):
+		if part_rescale_size == -1:
+			part_rescale_size = tuple(kwargs["size"])[0]
+		kwargs["part_rescale_size"] = part_rescale_size
+
 		super(Dataset, self).__init__(*args, **kwargs)
 
 		self.model_prepare = prepare

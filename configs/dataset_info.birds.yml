@@ -1,0 +1,111 @@
+BASE_DIR: /home/korsch_data/
+
+DATA_DIR: datasets
+MODEL_DIR: models
+
+MODELS:
+  # Classification
+  cvmodelz.InceptionV3:     &inception
+    folder: inception
+    weights:
+      inat: model.inat.ckpt.npz
+      imagenet: model.imagenet.ckpt.npz
+
+  cvmodelz.ResNet50:     &resnet50
+    folder: resnet
+    weights:
+      imagenet: model.npz
+
+  cvmodelz.VGG19:     &vgg19
+    folder: vgg19
+    weights:
+      imagenet: model.npz
+
+  # Detector
+
+  # Single-shot detection
+  chainercv.SSD300:       &ssd
+    folder: ssd/vgg16_extractor
+    class_key: ssd
+    weights: 
+      imagenet: model.imagenet.npz
+
+  # Faster R-CNN
+  frcnn:       &frcnn50
+    folder: frcnn/vgg16_extractor
+    class_key: frcnn
+    weights: 
+      imagenet: model.imagenet.npz
+
+DATASETS:
+
+  CUB200:         &cub200
+    folder: birds/cub200
+    annotations: "ORIGINAL"
+    annotation_type: FILE_LIST
+    n_classes: 200
+
+  NAB:         &nabirds
+    folder: birds/nabirds
+    annotations: "ORIGINAL"
+    annotation_type: FILE_LIST
+    n_classes: 555
+
+  BIRDSNAP:         &birdsnap
+    folder: birds/birdsnap
+    annotations: "RESIZED"
+    annotation_type: FILE_LIST
+    n_classes: 500
+
+PART_TYPES:
+  GLOBAL:         &parts_global
+    feature_suffix: ""
+
+  UNI2x2:            &parts_uni
+    is_uniform: true
+    feature_suffix: _4parts_uniform
+    rescale_size: !!int -1
+    scales: [ 0.5 ]
+
+  L1_pred:        &parts_l1p
+    annotations: L1_pred
+    feature_suffix: _5parts_L1_pred
+    rescale_size: !!int 427
+    scales: [ -1 ]
+
+  L1_full:        &parts_l1f
+    annotations: L1_full
+    feature_suffix: _5parts_L1_full
+    rescale_size: !!int 427
+    scales: [ -1 ]
+
+  CS_PARTS:        &cs_parts
+    <<: *parts_l1p
+
+  LAZY_CS_PARTS:        &lazy_cs_parts
+    annotations: ORIGINAL
+    feature_suffix: _5parts_cs_parts
+    rescale_size: !!int -1
+    scales: [ -1 ]
+
+  GT:             &parts_gt
+    feature_suffix: _16parts_gt
+    annotations: GT
+    rescale_size: !!int -1
+    scales:
+     - 0.31
+
+  GT2:            &parts_gt2
+    # TODO: should be changed, since GT2 parts can also be present for other datasets
+    annotations: GT2
+    feature_suffix: _5parts_gt
+    rescale_size: !!int -1
+    scales:
+      - 0.31
+
+PARTS:
+  # all <DATASET>_<PART_TYPES> combinations are created implicitely.
+  # if you want some changes in the configs, then crete here an entry
+  # and update the config values
+
+  []

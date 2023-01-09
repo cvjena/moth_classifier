@@ -26,11 +26,11 @@ def main(args, experiment_name="Moth classifier"):
 				"only_klass",
 			],
 			fc_params=[
-				"model/fc/b",
-				"model/fc8/b",
-				"model/fc6/b",
-				"model/wrapped/output/fc/b",
-				"model/wrapped/output/fc2/b",
+				"fc/b",
+				"fc8/b",
+				"fc6/b",
+				"wrapped/output/fc/b",
+				"wrapped/output/fc2/b",
 			]
 		)
 

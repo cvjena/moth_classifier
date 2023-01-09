@@ -68,17 +68,6 @@ class BaseClassifier(abc.ABC):
 		mode = "train" if chainer.config.train else "val"
 		return self._accumulators[mode]
 
-	def load(self, weights, *args, finetune: bool, **kwargs):
-		if not finetune:
-			self.model.reinitialize_clf(self.n_classes, self.output_size)
-		super().load(weights, *args, finetune=finetune, **kwargs)
-
-
-	def load_model(self, *args, **kwargs):
-		kwargs["feat_size"] = kwargs.get("feat_size", self.output_size)
-		super().load_model(*args, **kwargs)
-
-
 	def _get_features(self, X, model):
 		if self._only_head:
 			with self.eval_mode():

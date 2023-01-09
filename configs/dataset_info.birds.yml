@@ -67,9 +67,9 @@ PART_TYPES:
     rescale_size: !!int -1
     scales: [ 0.5 ]
 
-  L1_pred:        &parts_l1p
-    annotations: L1_pred
-    feature_suffix: _5parts_L1_pred
+  CS_PARTS:        &parts_l1p
+    annotations: CS_parts
+    feature_suffix: _5_cs_parts
     rescale_size: !!int 427
     scales: [ -1 ]
 
@@ -79,8 +79,6 @@ PART_TYPES:
     rescale_size: !!int 427
     scales: [ -1 ]
 
-  CS_PARTS:        &cs_parts
-    <<: *parts_l1p
 
   LAZY_CS_PARTS:        &lazy_cs_parts
     annotations: ORIGINAL

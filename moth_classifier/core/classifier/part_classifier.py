@@ -15,17 +15,25 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		super().__init__(*args, **kwargs)
 		self._concat = concat_features
 
+	def load(self, weights: str, n_classes: int, *, finetune: bool = False, **kwargs) -> None:
+		if not finetune:
+			# here self.n_classes is the default number of classes before loading, e.g. 1000
+			feat_size = self.model.meta.feature_size
+			self.model.reinitialize_clf(n_classes, feat_size)
+			self.separate_model.reinitialize_clf(n_classes, feat_size)
 
-	def load_model(self, *args, finetune: bool = False, **kwargs):
-		super().load_model(*args, finetune=finetune, **kwargs)
+		super().load(weights, n_classes, finetune=finetune, **kwargs)
 
-		if finetune:
-			if self.copy_mode == "share":
-				clf_name = self.model.clf_layer_name
-				new_clf = L.Linear(self.model.meta.feature_size, self.n_classes)
-				setattr(self.model, clf_name, new_clf)
 
-			self.model.reinitialize_clf(self.n_classes, self.model.meta.feature_size)
+	def load_model(self, weights_file, n_classes, *args, finetune: bool = False, **kwargs):
+		super().load_model(weights_file, n_classes, *args, finetune=finetune, **kwargs)
+
+		if finetune and self.copy_mode == "share":
+			clf_name = self.separate_model.clf_layer_name
+			new_clf = L.Linear(self.output_size, self.n_classes)
+			setattr(self.separate_model, clf_name, new_clf)
+
+		self.separate_model.reinitialize_clf(self.n_classes, self.output_size)
 
 
 	@property

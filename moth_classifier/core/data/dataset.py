@@ -21,7 +21,7 @@ def get_params(opts):
 	)
 
 class Dataset(
-	CSPartsMixin,
+	# CSPartsMixin,
 	ImageProfilerMixin,
 	TransformMixin,
 	UniformPartMixin,
@@ -125,7 +125,7 @@ class Dataset(
 
 
 	def transform(self, im_obj):
-		im_obj = self.set_parts(im_obj)
+		# im_obj = self.set_parts(im_obj)  # for CSPartsMixin
 
 		im, parts, lab = self.preprocess(im_obj)
 		im, parts = self.augment(im, parts)
@@ -154,7 +154,6 @@ class Dataset(
 			for i, part in enumerate(im_obj.visible_crops(self.ratio)):
 
 				if i == 0: self._profile_img(part, "(part) before prepare")
-				# import pdb; pdb.set_trace()
 				part = self.model_prepare(part, size=self.part_size)
 				if i == 0: self._profile_img(part, "(part) after prepare")
 				parts.append(part)

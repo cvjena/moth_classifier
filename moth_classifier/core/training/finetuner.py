@@ -16,6 +16,7 @@ from tqdm import tqdm
 
 from cluster_parts import core
 from cluster_parts import utils
+from cluster_parts.shortcuts import CSPartEstimation
 
 from moth_classifier.core import annotation as annot
 from moth_classifier.core import classifier
@@ -78,17 +79,9 @@ class MothClassifierMixin:
 		logging.info(f"Saving features to {features_file}")
 		np.savez(features_file, **data)
 
-	@property
-	def dataset_kwargs_factory(self, *args, **kwargs):
-		return self.patched_dataset_kwargs_factory
 
-	@dataset_kwargs_factory.setter
-	def dataset_kwargs_factory(self, func):
-		self._dataset_kwargs_factory = func
+	def _new_extractor(self) -> core.BoundingBoxPartExtractor:
 
-
-	def patched_dataset_kwargs_factory(self, *args, **kwargs) -> dict:
-		res = self._dataset_kwargs_factory(*args, **kwargs)
 		config_file = self.config["cs_config"]
 		assert config_file is not None, \
 			"CS config file was not set!"
@@ -108,11 +101,25 @@ class MothClassifierMixin:
 
 		)
 
-		return dict(res,
-			extractor=extractor,
-			cs=opts.classification_specific,
-			model=self.model,
-		)
+		return extractor, opts.classification_specific
+
+	def _new_trainer(self, *args, **kwargs):
+		trainer = super()._new_trainer(*args, **kwargs)
+		if self.part_type == "LAZY_CS_PARTS":
+			assert self.config["load"] is not None, \
+				"Lazy-initialized CS Parts require a fine-tuned model!"
+			extractor, cs = self._new_extractor()
+			ext = CSPartEstimation(
+				dataset=self.new_dataset(None),
+				extractor=extractor,
+				cs=cs,
+				model=self.model,
+				batch_size=self._batch_size,
+				n_jobs=self._n_jobs,
+			)
+			trainer.extend(ext, call_before_training=True)
+
+		return trainer
 
 class DefaultFinetuner(MothClassifierMixin, ft.DefaultFinetuner):
 	pass

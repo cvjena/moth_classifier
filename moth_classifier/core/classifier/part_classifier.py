@@ -82,7 +82,7 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		glob_loss, glob_accu = self.loss(glob_pred, y), self.model.accuracy(glob_pred, y)
 		part_loss, part_accu = self.loss(part_pred, y), self.separate_model.accuracy(part_pred, y)
 
-		_mean_pred = _mean([F.softmax(glob_pred), F.softmax(part_pred)])
+		_mean_pred = _mean([F.log_softmax(glob_pred), F.log_softmax(part_pred)])
 
 		self.eval_prediction(_mean_pred, y)
 

@@ -9,11 +9,11 @@ def _mean(arrays):
 
 
 class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
-	n_parts = 4
 
-	def __init__(self, concat_features, *args, **kwargs):
+	def __init__(self, concat_features, n_parts: int, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self._concat = concat_features
+		self.n_parts = n_parts
 
 	def load(self, weights: str, n_classes: int, *, finetune: bool = False, **kwargs) -> None:
 		if not finetune:

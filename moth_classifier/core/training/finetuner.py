@@ -58,10 +58,10 @@ class MothClassifierMixin:
 
 	@property
 	def n_classes(self) -> int:
-		if not self.is_hierarchical:
-			return super().n_classes
+		if self.is_hierarchical:
+			return self.annot.hierarchy.n_concepts
 
-		return self.annot.hierarchy.n_concepts
+		return super().n_classes
 
 
 	def init_classifier(self) -> None:

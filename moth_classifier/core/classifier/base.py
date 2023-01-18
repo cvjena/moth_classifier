@@ -112,14 +112,15 @@ class Classifier(HierarchyMixin, SizeMixin,
 		feat = self.extract(X)
 
 		pred = self.model.clf_layer(feat)
-		loss0 = self.loss(pred, y)
+		loss = self.loss(pred, y)
 
-		pred = self.size_model(sizes, pred, y)
-		loss1 = self.loss(pred, y)
+		if self._use_size_model:
+			pred = self.size_model(sizes, pred, y)
+			size_loss = self.loss(pred, y)
+			loss = self.loss_alpha * loss + (1 - self.loss_alpha) * size_loss
 
 		self.eval_prediction(pred, y)
 
-		loss = self.loss_alpha * loss0 + (1 - self.loss_alpha) * loss1
 		self.report(loss=loss)
 
 		return loss

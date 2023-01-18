@@ -20,13 +20,10 @@ class SizeMixin:
 
 		with self.init_scope():
 			# use 1.0 as default setting for the loss scaling
-			self.add_persistent("loss_alpha", 1.0)
+			self.add_persistent("loss_alpha", loss_alpha)
 
 		if not self._use_size_model:
 			return
-
-		# set the alpha only if we use a size model
-		self.loss_alpha = loss_alpha
 
 		n_classes = 69# self.n_classes
 		logging.info(f"Initializing size model for {n_classes} classes ({loss_alpha=})")

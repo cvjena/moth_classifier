@@ -3,12 +3,15 @@ import chainer.functions as F
 from cvmodelz import classifiers
 
 from moth_classifier.core.classifier.base import BaseClassifier
+from moth_classifier.core.classifier.hierarchy import HierarchyMixin
+from moth_classifier.core.classifier.size_model import SizeMixin
 
 def _mean(arrays):
 	return F.mean(F.stack(arrays, axis=0), axis=0)
 
 
-class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
+class PartClassifier(HierarchyMixin, SizeMixin,
+	BaseClassifier, classifiers.SeparateModelClassifier):
 
 	def __init__(self, concat_features, n_parts: int, *args, **kwargs):
 		super().__init__(*args, **kwargs)
@@ -69,6 +72,8 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 
 		return glob_feat, part_feats
 
+	def fuse_prediction(self, glob_pred, part_pred):
+		return _mean([F.log_softmax(glob_pred), F.log_softmax(part_pred)])
 
 	def forward(self, X, parts, y, sizes=None):
 		assert X.ndim == 4 and parts.ndim == 5 , \
@@ -76,13 +81,13 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 
 		glob_feat, part_feats = self.extract(X, parts)
 
-		glob_pred = self.model.clf_layer(glob_feat)
-		part_pred = self.separate_model.clf_layer(part_feats)
+		glob_pred = self.predict(glob_feat)
+		part_pred = self.predict(part_feats, model=self.separate_model)
 
-		glob_loss, glob_accu = self.loss(glob_pred, y), self.model.accuracy(glob_pred, y)
-		part_loss, part_accu = self.loss(part_pred, y), self.separate_model.accuracy(part_pred, y)
+		glob_loss, glob_accu = self.loss(glob_pred, y), self.accuracy(glob_pred, y)
+		part_loss, part_accu = self.loss(part_pred, y), self.accuracy(part_pred, y)
 
-		_mean_pred = _mean([F.log_softmax(glob_pred), F.log_softmax(part_pred)])
+		_mean_pred = self.fuse_prediction(glob_pred, part_pred)
 
 		self.eval_prediction(_mean_pred, y)
 
@@ -95,4 +100,3 @@ class PartClassifier(BaseClassifier, classifiers.SeparateModelClassifier):
 		)
 
 		return loss
-

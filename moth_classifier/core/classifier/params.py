@@ -1,4 +1,4 @@
-from moth_classifier.core.classifier.base import Classifier
+from moth_classifier.core.classifier.global_classifier import Classifier
 from moth_classifier.core.classifier.triplet_classifier import TripletClassifier
 from moth_classifier.core.classifier.part_classifier import PartClassifier
 

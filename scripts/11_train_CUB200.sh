@@ -2,6 +2,11 @@
 
 export DATA=$(realpath ../configs/dataset_info.birds.yml)
 export DATASET=CUB200
+OPTS=${OPTS:-""}
+
+if [[ ! -z $HC ]]; then
+	OPTS="${OPTS} -hc"
+fi
 
 << BLOCK_COMMENT
 Examples:
@@ -30,4 +35,5 @@ MODEL_TYPE=${MODEL_TYPE:-cvmodelz.InceptionV3} \
 PRE_TRAINING=${PRE_TRAINING:-inat} \
 GPU=${GPU:-0} \
 N_JOBS=${N_JOBS:-6} \
+OPTS=${OPTS} \
 	./10_train.sh $@

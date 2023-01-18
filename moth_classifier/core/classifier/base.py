@@ -1,17 +1,11 @@
 import abc
 import chainer
-import logging
-import numpy as np
 import typing as T
 
-from chainer import functions as F
 from contextlib import contextmanager
-from cvmodelz import classifiers
 
 from moth_classifier.core import dataset
 from moth_classifier.core import prediction as preds
-from moth_classifier.core.classifier.hierarchy import HierarchyMixin
-from moth_classifier.core.classifier.size_model import SizeMixin
 
 
 def _unpack(var):
@@ -28,8 +22,8 @@ def run_evaluations(pred, gt,
 class BaseClassifier(abc.ABC):
 
 	def __init__(self, only_head: bool, *args, **kwargs):
-		super().__init__(*args, **kwargs)
 		self._only_head = only_head
+		super().__init__(*args, **kwargs)
 		self.init_accumulators()
 
 
@@ -37,10 +31,12 @@ class BaseClassifier(abc.ABC):
 		self._accumulators = {
 			"train": preds.PredictionAccumulator(
 				few_shot_count=few_shot_count,
-				many_shot_count=many_shot_count),
+				many_shot_count=many_shot_count,
+				hierarchy=self.hierarchy),
 			"val": preds.PredictionAccumulator(
 				few_shot_count=few_shot_count,
-				many_shot_count=many_shot_count),
+				many_shot_count=many_shot_count,
+				hierarchy=self.hierarchy),
 		}
 
 	@property
@@ -65,13 +61,15 @@ class BaseClassifier(abc.ABC):
 		with chainer.using_config("train", False), chainer.no_backprop_mode():
 			yield
 
+	def accuracy(self, pred, gt):
+		return self.model.accuracy(pred, gt)
 
 	def eval_prediction(self, pred, gt, suffix=""):
 
 		self.accumulator.update(pred, gt)
 		accum = self.accumulator
 		evaluations = dict(
-			accu=self.model.accuracy,
+			accu=self.accuracy,
 			accu2=preds.Metric(accum, key="accuracy"),
 			prec=preds.Precision(accum),
 			rec=preds.Recall(accum),
@@ -105,23 +103,7 @@ class BaseClassifier(abc.ABC):
 
 
 
-class Classifier(HierarchyMixin, SizeMixin,
-	BaseClassifier, classifiers.Classifier):
-
-	def forward(self, X, y, sizes=None):
-		feat = self.extract(X)
-
-		pred = self.model.clf_layer(feat)
-		loss = self.loss(pred, y)
-
-		if self._use_size_model:
-			pred = self.size_model(sizes, pred, y)
-			size_loss = self.loss(pred, y)
-			loss = self.loss_alpha * loss + (1 - self.loss_alpha) * size_loss
-
-		self.eval_prediction(pred, y)
-
-		self.report(loss=loss)
-
-		return loss
-
+	def predict(self, features, *, model = None):
+		if model is None:
+			model = self.model
+		return model.clf_layer(features)

@@ -26,6 +26,7 @@ $ ./11_train_JENA_MOTHS.sh -hc # < for hierarchical classifier
 $ PARTS=LAZY_CS_PARTS ./11_train_JENA_MOTHS.sh
 BLOCK_COMMENT
 
+OPTS="${OPTS} --oversample 30"
 
 PARTS=${PARTS:-GLOBAL}
 BIG=${BIG:-0} \

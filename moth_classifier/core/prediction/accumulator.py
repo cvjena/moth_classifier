@@ -1,5 +1,10 @@
 import chainer
 import numpy as np
+import networkx as nx
+
+from chainer import functions as F
+from collections import defaultdict
+from cvdatasets import Hierarchy
 
 
 def _to_cpu(var, dtype=None):
@@ -13,7 +18,8 @@ class PredictionAccumulator:
 	def __init__(self,
 		logits = None, gt = None, *,
 		few_shot_count: int = -1,
-		many_shot_count: int = -1):
+		many_shot_count: int = -1,
+		hierarchy: Hierarchy = None):
 
 		super().__init__()
 
@@ -22,6 +28,7 @@ class PredictionAccumulator:
 
 		self.few_shot_count = few_shot_count
 		self.many_shot_count = many_shot_count
+		self.hierarchy = hierarchy
 
 	def update(self, logits, gt):
 
@@ -37,13 +44,92 @@ class PredictionAccumulator:
 		else:
 			self._gt += [_to_cpu(gt, np.int32)]
 
+	def calc_hierarchical_metrics(self, *, only_available: bool = True, beta: int = 1):
+		"""
+			partially from https://github.com/cabrust/chia/blob/main/chia/components/evaluators/hierarchical.py#L31
+		"""
+		logits, gt = self.reset()
+		N = len(logits)
+
+		dim = self.hierarchy.orig_lab_to_dimension.get
+		G = self.hierarchy.graph
+		root = next(nx.topological_sort(G))
+
+		# transform GT labels to original label uid
+		hc_orig_gt = list(map(self.hierarchy.label_transform, gt))
+
+
+		pred = chainer.as_array(F.sigmoid(logits))
+		deembed_pred_dist = self.hierarchy.deembed_dist(pred)
+
+		# argmax and select the correct dimension
+		predictions = np.array([
+			sorted(dist, key=lambda x: x[1], reverse=True)[0][0]
+				for dist in deembed_pred_dist
+		])
+
+		# confusion matrix
+		cm = defaultdict(int)
+
+		for key in zip(hc_orig_gt, predictions):
+			cm[key] += 1
+
+		confused = 0
+		precision, recall, fbeta_score = 0, 0, 0
+		beta_square = beta ** 2
+
+		for (gt_uid, pred_uid), count in cm.items():
+			if gt_uid != pred_uid:
+				confused += count
+
+			# Hierarchical Precision / Recall
+			gt_anc = set(nx.ancestors(G, gt_uid)) | {gt_uid}
+			pred_anc = set(nx.ancestors(G, pred_uid)) | {pred_uid}
+
+			gt_anc -= {root}
+			pred_anc -= {root}
+
+			n_matched = len(pred_anc.intersection(gt_anc))
+			if n_matched == 0:
+				continue
+
+			cur_h_prec, cur_h_recall = 0, 0
+
+			if pred_anc:
+				cur_h_prec = n_matched / len(pred_anc)
+
+			if gt_anc:
+				cur_h_recall = n_matched / len(gt_anc)
+
+			cur_h_prec *= count
+			cur_h_recall *= count
+
+			precision += cur_h_prec
+			recall += cur_h_recall
+
+			numerator = (1 + beta_square) * cur_h_prec * cur_h_recall
+			denominator = beta_square * cur_h_prec + cur_h_recall
+			fbeta_score += numerator / denominator
+
+		self._metrics = {
+			"accuracy": (N - confused) / N,
+			"recall": recall / N,
+			"precision": precision / N,
+			f"f{beta}_score": fbeta_score / N,
+
+		}
+
+		return self._metrics
+
+
 	def calc_metrics(self, *, only_available: bool = True, beta: int = 1):
 		if self._metrics is not None:
 			return self._metrics
 
-		logits, true = self.reset()
-		n_cls = max(logits.shape[1], true.max())
+		if self.hierarchy is not None:
+			return self.calc_hierarchical_metrics(only_available=only_available, beta=beta)
 
+		n_cls = max(logits.shape[1], true.max())
 		if only_available:
 			_logits = np.full_like(logits, fill_value=logits.min())
 			available = np.unique(true)

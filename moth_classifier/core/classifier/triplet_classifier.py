@@ -8,7 +8,7 @@ from chainer.backends.cuda import to_cpu
 from pytorch_metric_learning.miners import TripletMarginMiner
 from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
-from moth_classifier.core.classifier.base import Classifier
+from moth_classifier.core.classifier import Classifier
 
 
 def as_torch_tensor(var: chainer.Variable):

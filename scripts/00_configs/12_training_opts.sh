@@ -15,7 +15,7 @@ BATCH_SIZE=${BATCH_SIZE:-32}
 UPDATE_SIZE=${UPDATE_SIZE:-64}
 
 # >>> LR definition >>>
-LR_INIT=${LR_INIT:-1e-4}
+LR_INIT=${LR_INIT:-1e-3}
 LR_DECAY=${LR_DECAY:-1e-1}
 LR_STEP=${LR_STEP:-25}
 LR_TARGET=${LR_TARGET:-1e-6}
@@ -24,7 +24,7 @@ LR=${LR:-"-lr ${LR_INIT} -lrd ${LR_DECAY} -lrs ${LR_STEP} -lrt ${LR_TARGET}"}
 
 DECAY=${DECAY:-5e-4}
 EPOCHS=${EPOCHS:-60}
-LABEL_SMOOTHING=${LABEL_SMOOTHING:-0.0}
+LABEL_SMOOTHING=${LABEL_SMOOTHING:-0.1}
 
 if [[ -z ${DATASET} ]]; then
 	echo "DATASET ist not set!"

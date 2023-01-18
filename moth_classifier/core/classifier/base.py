@@ -8,9 +8,10 @@ from chainer import functions as F
 from contextlib import contextmanager
 from cvmodelz import classifiers
 
-from moth_classifier.core.classifier.size_model import SizeModel
 from moth_classifier.core import dataset
 from moth_classifier.core import prediction as preds
+from moth_classifier.core.classifier.hierarchy import HierarchyMixin
+from moth_classifier.core.classifier.size_model import SizeMixin
 
 
 def _unpack(var):
@@ -26,31 +27,10 @@ def run_evaluations(pred, gt,
 
 class BaseClassifier(abc.ABC):
 
-	def __init__(self, only_head: bool,
-				 use_size_model: bool,
-				 loss_alpha: float = 0.5,
-				 *args, **kwargs):
+	def __init__(self, only_head: bool, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 		self._only_head = only_head
-		self._use_size_model = use_size_model
-
 		self.init_accumulators()
-
-		with self.init_scope():
-			# use 1.0 as default setting for the loss scaling
-			self.add_persistent("loss_alpha", 1.0)
-
-		if not self._use_size_model:
-			return
-
-		# set the alpha only if we use a size model
-		self.loss_alpha = loss_alpha
-
-		n_classes = 69# self.n_classes
-		logging.info(f"Initializing size model for {n_classes} classes ({loss_alpha=})")
-
-		with self.init_scope():
-			self._size_model = SizeModel(n_classes)#self.n_classes)
 
 
 	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50) -> None:
@@ -124,42 +104,9 @@ class BaseClassifier(abc.ABC):
 			reporter=self.report)
 
 
-	def fit_size_model(self, ds: dataset.Dataset):
-		if not self._use_size_model:
-			return
 
-		arr = self.xp.array
-
-		if isinstance(ds, chainer.datasets.SubDataset):
-			ds = ds._dataset
-
-		self._size_model.fit(arr(ds.sizes), arr(ds.labels))
-
-
-	def size_model(self, sizes: np.ndarray, pred: chainer.Variable, y):
-
-		if not self._use_size_model or sizes is None:
-			return pred
-
-		# (batch_size, n_features, feature_size) is expected
-		sizes = self.xp.array(sizes).reshape(-1, 1, 1)
-		size_log_probs = self._size_model.log_soft_assignment(sizes)[:, 0, :]
-
-		log_pred = F.log_softmax(pred)
-		log_cls_weights = self.xp.log(self._size_model.w)
-
-		self.eval_prediction(pred, y, suffix="0")
-
-		self.report(
-			#accu0=self.model.accuracy(pred, y),
-			accu_s=self.model.accuracy(size_log_probs, y),
-		)
-
-		return log_pred + size_log_probs# - log_cls_weights
-
-
-class Classifier(BaseClassifier, classifiers.Classifier):
-
+class Classifier(HierarchyMixin, SizeMixin,
+	BaseClassifier, classifiers.Classifier):
 
 	def forward(self, X, y, sizes=None):
 		feat = self.extract(X)

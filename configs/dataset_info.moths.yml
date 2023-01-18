@@ -54,11 +54,15 @@ DATASETS:
     n_classes: 176
     annotations: ORIGINAL
 
-  JENA_MOTHS_CROPPED:
+  JENA_MOTHS_CROPPED: &jena_cropped
     <<: *base_moths
     folder: moths/jena_moths/2022-04/cropped
     n_classes: 173
     annotations: ORIGINAL
+
+  JENA_MOTHS_CROPPED_HC:
+    <<: *jena_cropped
+    folder: moths/jena_moths/2023-01/cropped
 
   JENA_MOTHS_CROPPED_COMM:
     <<: *base_moths
@@ -66,11 +70,15 @@ DATASETS:
     n_classes: 69
     annotations: ORIGINAL
 
-  JENA_MOTHS_CROPPED_AUG:
+  JENA_MOTHS_CROPPED_AUG: &jena_cropped_aug
     <<: *base_moths
     folder: moths/jena_moths/2022-08/cropped_augmented
     n_classes: 4626
     annotations: ORIGINAL
+
+  JENA_MOTHS_CROPPED_AUG_HC:
+    <<: *jena_cropped_aug
+    folder: moths/jena_moths/2023-01/cropped_augmented
 
   JENA_MOTHS_CROPPED_AUG_EU:
     <<: *base_moths

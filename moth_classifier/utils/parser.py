@@ -61,6 +61,9 @@ def parse_args(args=None, namespace=None):
 		Arg.float("--loss_alpha", default=0.5,
 			help="Weight factor for the losses from the CNN and the size model."),
 
+		Arg.flag("--hierarchical", "-hc",
+			help="enables hierarchical classifier loss and evaluation"),
+
 		Arg.float("--triplet_margin", "-margin", default=None,
 			help="If set, then utilize the triplet loss. If >0, use miner considering this margin, if <=0 mine all triplets"),
 

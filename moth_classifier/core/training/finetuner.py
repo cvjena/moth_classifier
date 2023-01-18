@@ -52,6 +52,24 @@ def new(opts, experiment_name):
 
 class MothClassifierMixin:
 
+	@property
+	def is_hierarchical(self) -> bool:
+		return self.config["hierarchical"]
+
+	@property
+	def n_classes(self) -> int:
+		if not self.is_hierarchical:
+			return super().n_classes
+
+		return self.annot.hierarchy.n_concepts
+
+
+	def init_classifier(self) -> None:
+		if self.is_hierarchical:
+			self._clf_creator.kwargs["hierarchy"] = self.annot.hierarchy
+
+		return super().init_classifier()
+
 	def read_annotations(self):
 		args = AnnotationArgs(
 			self.info_file,

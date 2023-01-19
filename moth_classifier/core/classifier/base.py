@@ -27,16 +27,16 @@ class BaseClassifier(abc.ABC):
 		self.init_accumulators()
 
 
-	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50) -> None:
+	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50, **kwargs) -> None:
 		self._accumulators = {
 			"train": preds.PredictionAccumulator(
 				few_shot_count=few_shot_count,
 				many_shot_count=many_shot_count,
-				hierarchy=self.hierarchy),
+				**kwargs),
 			"val": preds.PredictionAccumulator(
 				few_shot_count=few_shot_count,
 				many_shot_count=many_shot_count,
-				hierarchy=self.hierarchy),
+				**kwargs),
 		}
 
 	@property

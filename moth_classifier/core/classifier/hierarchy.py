@@ -9,11 +9,13 @@ from cvdatasets import Hierarchy
 class HierarchyMixin:
 
 	def __init__(self, *args,
+		use_hc: bool = False,
 		hierarchy: Hierarchy = None,
 		**kwargs):
 		self.hierarchy = hierarchy
-		super().__init__(*args, **kwargs)
+		self.use_hc = use_hc
 
+		super().__init__(*args, **kwargs)
 
 		# if self.hierarchy is not None:
 		# 	import matplotlib.pyplot as plt
@@ -25,9 +27,14 @@ class HierarchyMixin:
 		# 	plt.show()
 		# 	plt.close()
 
+	def init_accumulators(self, **kwargs):
+		super().init_accumulators(
+			use_hc=self.use_hc,
+			hierarchy=self.hierarchy, **kwargs)
+
 
 	def loss(self, pred: chainer.Variable, y: chainer.Variable) -> chainer.Variable:
-		if self.hierarchy is None:
+		if not self.use_hc:
 			return super().loss(pred, y)
 
 		hc_y = self.hierarchy.embed_labels(y, xp=self.xp)
@@ -41,13 +48,13 @@ class HierarchyMixin:
 		return loss
 
 	def fuse_prediction(self, glob_pred, part_pred):
-		if self.hierarchy is None:
+		if not self.use_hc:
 			return super().fuse_prediction(glob_pred, part_pred)
 
 		import pdb; pdb.set_trace()
 
 	def accuracy(self, pred, gt):
-		if self.hierarchy is None:
+		if not self.use_hc:
 			return super().accuracy(pred, gt)
 
 		pred = chainer.cuda.to_cpu(chainer.as_array(F.sigmoid(pred)))

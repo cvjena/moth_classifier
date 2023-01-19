@@ -64,11 +64,14 @@ class MothClassifierMixin:
 		return super().n_classes
 
 
-	def init_classifier(self) -> None:
-		if self.is_hierarchical:
-			self._clf_creator.kwargs["hierarchy"] = self.annot.hierarchy
+	def init_classifier(self, **kwargs) -> None:
+		# if self.is_hierarchical:
+		# 	self._clf_creator.kwargs["hierarchy"] = self.annot.hierarchy
 
-		return super().init_classifier()
+		return super().init_classifier(
+			hierarchy=self.annot.hierarchy,
+			use_hc=self.is_hierarchical,
+			**kwargs)
 
 	def read_annotations(self):
 		args = AnnotationArgs(

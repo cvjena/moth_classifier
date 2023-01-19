@@ -84,7 +84,8 @@ class PredictionAccumulator:
 		logits = None, gt = None, *,
 		few_shot_count: int = -1,
 		many_shot_count: int = -1,
-		hierarchy: Hierarchy = None):
+		hierarchy: Hierarchy = None,
+		use_hc: bool = False):
 
 		super().__init__()
 
@@ -94,6 +95,7 @@ class PredictionAccumulator:
 		self.few_shot_count = few_shot_count
 		self.many_shot_count = many_shot_count
 		self.hierarchy = hierarchy
+		self.use_hc = use_hc
 
 	def update(self, logits, gt):
 
@@ -160,8 +162,8 @@ class PredictionAccumulator:
 		if self._metrics is not None:
 			return self._metrics
 
-		# if self.hierarchy is not None:
-		# 	return self.calc_hierarchical_metrics(only_available=only_available, beta=beta)
+		if self.use_hc:
+			return self.calc_hierarchical_metrics(only_available=only_available, beta=beta)
 
 		logits, true = self.reset()
 		n_cls = max(logits.shape[1], true.max())

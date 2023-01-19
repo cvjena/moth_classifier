@@ -68,44 +68,6 @@ class HierarchyMixin:
 
 		return (predictions == hc_idxs_gt).mean()
 
-		import pdb; pdb.set_trace()
-
-
-
-		count = 0
-		for sample_pred, sample_gt in zip(pred.argmax(axis=1), hc_idxs):
-			count += int(sample_pred == sample_gt)
-
-		return count / len(gt)
-
-		root = next(nx.topological_sort(self.hierarchy.graph))
-		hc_y = self.hierarchy.embed_labels(gt, xp=np)
-		xs, ys = np.where(hc_y)
-
-		results = [
-			[[], -1, -1]
-			for _ in range(len(gt))
-		]
-
-		count = 0
-		for x, y in zip(xs, ys):
-			sample_pred = pred[x]
-			sample_gt = hc_idxs[x]
-
-			if y != dim(root):
-				results[x][0].append(y)
-			results[x][1] = sample_gt
-			results[x][2] = sample_pred.argmax()
-
-			count += int(sample_gt == sample_pred.argmax())
-
-		# count = 0
-		# for hc_gt, sample_gt, sample_pred in results:
-		# 	count += int(sample_gt == sample_pred)
-
-		return count / len(gt)
-
-
 
 	def predict_dist(self, features, *, model=None):
 		pred = self.predict(features, model=model)

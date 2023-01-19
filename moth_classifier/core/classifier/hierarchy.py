@@ -67,15 +67,3 @@ class HierarchyMixin:
 		hc_idxs_gt = np.array(list(map(dim, hc_orig_gt)))
 
 		return (predictions == hc_idxs_gt).mean()
-
-
-	def predict_dist(self, features, *, model=None):
-		pred = self.predict(features, model=model)
-		if self.hierarchy is None:
-			return pred
-
-		return self.hierarchy.deembed_dist(F.sigmoid(pred))
-
-	# def predict_dist(self, feature_batch):
-	#     embedded_predictions = self.predict_embedded(feature_batch).numpy()
-	#     return self.deembed_dist(embedded_predictions)

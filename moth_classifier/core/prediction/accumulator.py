@@ -248,10 +248,10 @@ class PredictionAccumulator:
 		if not self.use_hc:
 			# unavailable logits can be simply set to the smallest value
 			if only_available:
-				_logits = np.full_like(logits, fill_value=logits.min())
-				available = np.unique(true)
-				_logits[:, available] = logits[:, available]
-				logits = _logits
+				fill_value = logits.min()
+				_, n_cls = logits.shape
+				mask_of_available = np.in1d(np.arange(n_cls), np.unique(true))
+				logits[:, ~mask_of_available] = fill_value
 
 			preds = logits.argmax(axis=1)
 
@@ -263,7 +263,6 @@ class PredictionAccumulator:
 			# otherwise, we need to convert them to class uids,
 			# so that further evaluation can be done using the
 			# hierarchy information
-			import pdb; pdb.set_trace()
 			true_uids = self._to_uids(true)
 			pred_uids = self._to_uids(preds)
 			return pred_uids, true_uids

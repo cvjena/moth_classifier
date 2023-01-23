@@ -69,7 +69,7 @@ class MothClassifierMixin:
 		# 	self._clf_creator.kwargs["hierarchy"] = self.annot.hierarchy
 
 		return super().init_classifier(
-			hierarchy=self.annot.hierarchy,
+			hierarchy=getattr(self.annot, "hierarchy", None),
 			use_hc=self.is_hierarchical,
 			**kwargs)
 

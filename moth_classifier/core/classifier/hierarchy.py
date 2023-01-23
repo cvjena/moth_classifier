@@ -37,12 +37,14 @@ class HierarchyMixin:
 		if not self.use_hc:
 			return super().loss(pred, y)
 
-		hc_y = self.hierarchy.embed_labels(y, xp=self.xp)
-		loss_mask = self.hierarchy.loss_mask(y, xp=self.xp)
+		y = chainer.cuda.to_cpu(chainer.as_array(y))
+
+		hc_y = self.hierarchy.embed_labels(y)
+		loss_mask = self.hierarchy.loss_mask(y)
 
 		hc_y[~loss_mask] = -1
 
-		loss = F.sigmoid_cross_entropy(pred, hc_y,
+		loss = F.sigmoid_cross_entropy(pred, self.xp.array(hc_y),
 			normalize=False, reduce="mean")
 
 		return loss
@@ -58,13 +60,14 @@ class HierarchyMixin:
 			return super().accuracy(pred, gt)
 
 		pred = chainer.cuda.to_cpu(chainer.as_array(F.sigmoid(pred)))
-		deembed_pred_dist = self.hierarchy.deembed_dist(pred)
+		probs_per_node = self.hierarchy.deembed_dist(pred)
+
 		dim = self.hierarchy.orig_lab_to_dimension.get
 
 		# argmax and select the correct dimension
 		predictions = np.array([
 			dim(sorted(dist, key=lambda x: x[1], reverse=True)[0][0])
-				for dist in deembed_pred_dist
+				for dist in probs_per_node
 		])
 
 

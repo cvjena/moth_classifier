@@ -1,5 +1,6 @@
 import abc
 import chainer
+import numpy as np
 import typing as T
 
 from contextlib import contextmanager
@@ -21,10 +22,10 @@ def run_evaluations(pred, gt,
 
 class BaseClassifier(abc.ABC):
 
-	def __init__(self, only_head: bool, *args, **kwargs):
+	def __init__(self, *args, only_head: bool, n_accu_jobs: int = -1, **kwargs):
 		self._only_head = only_head
 		super().__init__(*args, **kwargs)
-		self.init_accumulators()
+		self.init_accumulators(n_jobs=n_accu_jobs)
 
 
 	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50, **kwargs) -> None:

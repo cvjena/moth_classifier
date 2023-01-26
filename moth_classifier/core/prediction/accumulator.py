@@ -1,12 +1,15 @@
 import chainer
+import multiprocessing as mp
 import networkx as nx
 import numpy as np
 import typing as T
+import weakref
 
 from chainer import functions as F
 from collections import Counter
 from collections import defaultdict
 from cvdatasets import Hierarchy
+from functools import partial
 
 
 def _to_cpu(var, dtype=None):
@@ -130,16 +133,43 @@ def _calc_scores(pred, gt, *, beta: float = 1.0) -> Scores:
 	)
 
 
+POOL = None
+
 class PredictionAccumulator:
+
+	def __del__(self):
+		if hasattr(self, "_pool"):
+			self._pool = None
+
+	@property
+	def pool(self):
+		if self._pool is not None:
+			return self._pool()
+		return None
+
+	def _init_pool(self, n_jobs):
+		global POOL
+
+		if n_jobs is not None and n_jobs <= 1:
+			self._pool = None
+			return
+
+		if POOL is None:
+			POOL = mp.Pool(n_jobs)
+
+		self._pool = weakref.ref(POOL)
 
 	def __init__(self,
 		logits = None, gt = None, *,
 		few_shot_count: int = -1,
 		many_shot_count: int = -1,
 		hierarchy: Hierarchy = None,
-		use_hc: bool = False):
-
+		use_hc: bool = False,
+		n_jobs: int = -1):
 		super().__init__()
+
+		self._init_pool(n_jobs)
+
 
 		self._logits = [] if logits is None else [_to_cpu(logits, np.float16)]
 		self._gt = [] if gt is None else [_to_cpu(gt, np.int32)]
@@ -211,9 +241,10 @@ class PredictionAccumulator:
 		if self._metrics is not None:
 			return self._metrics
 
-		logits, true = self.reset()
+		preds, gt = self.reset(only_available=only_available)
 
-		preds, gt = self._predict(logits, true, only_available=only_available)
+		# logits, true = self.reset()
+		# preds, gt = self._predict(logits, true, only_available=only_available)
 
 		scores = _calc_scores(preds, gt, beta=beta)
 		self._metrics = {
@@ -302,11 +333,91 @@ class PredictionAccumulator:
 
 		return predictions, class_uids
 
+	def do_work(self, work, payload):
+		pool = self.pool
+		mapper = map if pool is None else pool.map
+		res = mapper(work, payload)
 
-	def reset(self):
-		logits, gt = np.vstack(self._logits), np.hstack(self._gt)
+		return np.hstack(list(res))
+
+
+	def reset(self, *, only_available: bool = True):
+		true = np.hstack(self._gt)
+		logits = self._logits
+
 		self._logits, self._gt = [], []
-		return logits, gt
+
+		if self.use_hc:
+			assert self.hierarchy is not None, \
+				"For hierarchical classification, a hierarchy is required!"
+
+			# transform GT labels to original label uid
+			true_uids = self._to_uids(true)
+
+			uid_of_available = set()
+			if only_available:
+				# get only those present in the subset
+				_available_leaves = np.unique(true_uids)
+				uid_of_available = set(_available_leaves)
+
+				# ... and their ancestors
+				for label in _available_leaves:
+					uid_of_available |= set(nx.ancestors(self.hierarchy.graph, label))
+
+			work = partial(h_argmax, hierarchy=self.hierarchy, available_uuids=uid_of_available)
+			pred_uids = self.do_work(work, logits)
+			return pred_uids, true_uids
+
+		else:
+			# simple argmax on the logits, even softmax is not needed here
+			mask_of_available = None
+			if only_available:
+				n_cls = logits[0].shape
+				mask_of_available = np.in1d(np.arange(n_cls), np.unique(true))
+
+			work = partial(argmax, axis=1, mask=mask_of_available)
+			preds = self.do_work(work, logits)
+
+			# if we dont have any hierarchy, then just pass them as
+			# simple logit ids
+			if self.hierarchy is None:
+				return preds, true
+
+			# otherwise, we need to convert them to class uids,
+			# so that further evaluation can be done using the
+			# hierarchy information
+			true_uids = self._to_uids(true)
+			pred_uids = self._to_uids(preds)
+			return pred_uids, true_uids
+
+
+def argmax(arr, axis=1, *, mask=None):
+	if mask is None:
+		return np.argmax(arr, axis=1)
+
+	# fill the non-mask entries with the smallest value
+	arr[~mask] = arr.min()
+	return np.argmax(arr, axis=1)
+
+def h_argmax(arr, hierarchy: Hierarchy, *, available_uuids = set()):
+	""" Hierarchical argmax. """
+
+	probs = chainer.as_array(F.sigmoid(arr))
+	probs_per_node = hierarchy.deembed_dist(probs)
+
+	if available_uuids:
+		# remove all probabilities that are not available
+		probs_per_node = [
+			list(filter(lambda tup: tup[0] in available_uuids, probs))
+			for probs in probs_per_node
+		]
+
+	# sort by the de-embedded probabilities and
+	# return the class uuid of the one with the max prob
+	preds = [sorted(probs, key=lambda tup: tup[1], reverse=True)[0][0]
+		for probs in probs_per_node]
+
+	return preds
 
 
 	# def calc_metrics(self, *, only_available: bool = True, beta: int = 1):

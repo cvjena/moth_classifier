@@ -243,9 +243,6 @@ class PredictionAccumulator:
 
 		preds, gt = self.reset(only_available=only_available)
 
-		# logits, true = self.reset()
-		# preds, gt = self._predict(logits, true, only_available=only_available)
-
 		scores = _calc_scores(preds, gt, beta=beta)
 		self._metrics = {
 			"accuracy": scores.accuracy,
@@ -272,66 +269,6 @@ class PredictionAccumulator:
 		assert self.hierarchy is not None, \
 			"A hierarchy is required!"
 		return np.fromiter(map(self.hierarchy.label_transform, labels), dtype=labels.dtype)
-
-	def _predict(self, logits, true, *, only_available: bool = True):
-
-		# simple argmax on the logits, even softmax is not needed here
-		if not self.use_hc:
-			# unavailable logits can be simply set to the smallest value
-			if only_available:
-				fill_value = logits.min()
-				_, n_cls = logits.shape
-				mask_of_available = np.in1d(np.arange(n_cls), np.unique(true))
-				logits[:, ~mask_of_available] = fill_value
-
-			preds = logits.argmax(axis=1)
-
-			# if we dont have any hierarchy, then just pass them as
-			# simple logit ids
-			if self.hierarchy is None:
-				return preds, true
-
-			# otherwise, we need to convert them to class uids,
-			# so that further evaluation can be done using the
-			# hierarchy information
-			true_uids = self._to_uids(true)
-			pred_uids = self._to_uids(preds)
-			return pred_uids, true_uids
-
-		# hierarchical classification is a bit more tricky...
-		assert self.hierarchy is not None, \
-			"For hierarchical classification, a hierarchy is required!"
-		# first, we need to compute the probabilties for each node
-		# and "unenbed" them back according to the hierarchical model
-		probs = chainer.as_array(F.sigmoid(logits))
-		probs_per_node = self.hierarchy.deembed_dist(probs)
-
-		# transform GT labels to original label uid
-		class_uids = self._to_uids(true)
-
-		if only_available:
-			# get only those present in the subset
-			_available_leaves = np.unique(class_uids)
-			uid_of_available = set(_available_leaves)
-
-			# ... and their ancestors
-			for label in _available_leaves:
-				uid_of_available |= set(nx.ancestors(self.hierarchy.graph, label))
-
-			# remove all probabilities that are not available
-			probs_per_node = [
-				list(filter(lambda tup: tup[0] in uid_of_available, probs))
-				for probs in probs_per_node
-			]
-
-		# now we can sort by the probability and pick the first element
-		# from the tuple, which is the class uid
-		predictions = np.array([
-			sorted(probs, key=lambda tup: tup[1], reverse=True)[0][0]
-				for probs in probs_per_node
-		])
-
-		return predictions, class_uids
 
 	def do_work(self, work, payload):
 		pool = self.pool

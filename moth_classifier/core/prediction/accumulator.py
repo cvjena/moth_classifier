@@ -138,7 +138,7 @@ def argmax(arr, axis=1, *, mask=None):
 		return np.argmax(arr, axis=1)
 
 	# fill the non-mask entries with the smallest value
-	arr[~mask] = arr.min()
+	arr[:, ~mask] = arr.min()
 	return np.argmax(arr, axis=1)
 
 def h_argmax(arr, hierarchy: Hierarchy, *, available_uuids = set()):
@@ -293,7 +293,7 @@ class PredictionAccumulator:
 			# simple argmax on the logits, even softmax is not needed here
 			mask_of_available = None
 			if only_available:
-				n_cls = logits[0].shape
+				_, n_cls = logits[0].shape
 				mask_of_available = np.in1d(np.arange(n_cls), np.unique(true))
 
 			work = partial(argmax, axis=1, mask=mask_of_available)

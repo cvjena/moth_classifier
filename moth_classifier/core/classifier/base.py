@@ -76,6 +76,10 @@ class BaseClassifier(abc.ABC):
 			rec=preds.Recall(accum),
 			f1=preds.FScore(accum, beta=1),
 
+			hprec=preds.Metric(accum, key="h_precision"),
+			hrec=preds.Metric(accum, key="h_recall"),
+			hf1=preds.Metric(accum, key="h_f1_score"),
+
 			few_count=preds.Metric(accum, key="few_shot_count"),
 			few_cls_count=preds.Metric(accum, key="few_shot_cls_count"),
 			prec_fs=preds.Metric(accum, key="precision/few-shot@20"),

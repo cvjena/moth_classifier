@@ -22,8 +22,13 @@ def run_evaluations(pred, gt,
 
 class BaseClassifier(abc.ABC):
 
-	def __init__(self, *args, only_head: bool, n_accu_jobs: int = -1, **kwargs):
+	def __init__(self, *args,
+		only_head: bool,
+		n_accu_jobs: int = -1,
+		class_weights: np.ndarray = None,
+		**kwargs):
 		self._only_head = only_head
+		self._class_weights = class_weights
 		super().__init__(*args, **kwargs)
 		self.init_accumulators(n_jobs=n_accu_jobs)
 
@@ -41,11 +46,18 @@ class BaseClassifier(abc.ABC):
 		}
 
 	@property
+	def class_weights(self):
+		if self._class_weights is not None:
+			return self.xp.array(self._class_weights)
+
+	@property
 	def accumulator(self) -> preds.PredictionAccumulator:
 		mode = "train" if chainer.config.train else "val"
 		return self._accumulators[mode]
 
 	def _get_features(self, X, model):
+		# shape = (len(X), self.model.meta.feature_size)
+		# return self.xp.random.randn(*shape, dtype=np.float32)
 		if self._only_head:
 			with self.eval_mode():
 				features = model(X, layer_name=model.meta.feature_layer)

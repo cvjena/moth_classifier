@@ -31,6 +31,14 @@ if [[ -z ${DATASET} ]]; then
 	error=1
 fi
 
+if [[ ! -z $OVERSAMPLE ]]; then
+	OPTS="${OPTS} --oversample ${OVERSAMPLE:-30}"
+fi
+
+if [[ ! -z $WEIGHTED_LOSS ]]; then
+	OPTS="${OPTS} --weighted_loss"
+fi
+
 
 OUTPUT_SUFFIX=${OUTPUT_SUFFIX:-""}
 OUTPUT_PREFIX=${OUTPUT_PREFIX:-"${_home:-..}/.results"}

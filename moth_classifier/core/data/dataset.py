@@ -71,6 +71,15 @@ class Dataset(
 		# for these models, we need to scale from 0..1 to -1..1
 		self.zero_mean = opts.model_type in ["cvmodelz.InceptionV3"]
 		self._setup_augmentations(opts)
+		self._setup_class_weights()
+
+	def _setup_class_weights(self):
+		_counts = np.bincount(self.labels)
+		self.class_weights = np.ones_like(_counts, dtype=np.float32)
+		mask = _counts != 0
+		N = _counts[mask].min()
+		self.class_weights[mask] = N / _counts[mask]
+
 
 	def _setup_augmentations(self, opts):
 

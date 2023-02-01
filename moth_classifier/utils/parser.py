@@ -26,6 +26,8 @@ def add_training_args(parser: BaseParser):
 			"updates the weights only if the update size is exceeded"),
 
 		Arg("--test_fold_id", type=int, default=0),
+		Arg.flag("--weighted_loss",
+			help="use inversed class frequency to weight the CE loss"),
 
 	], group_name="Training arguments")
 

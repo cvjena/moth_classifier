@@ -11,12 +11,13 @@ class Classifier(HierarchyMixin, SizeMixin,
 	def forward(self, X, y, sizes=None):
 		feat = self.extract(X)
 
+		w = self.class_weights
 		pred = self.predict(feat)
-		loss = self.loss(pred, y)
+		loss = self.loss(pred, y, class_weight=w)
 
 		if self._use_size_model:
 			pred = self.size_model(sizes, pred, y)
-			size_loss = self.loss(pred, y)
+			size_loss = self.loss(pred, y, class_weight=w)
 			loss = self.loss_alpha * loss + (1 - self.loss_alpha) * size_loss
 
 		self.eval_prediction(pred, y)

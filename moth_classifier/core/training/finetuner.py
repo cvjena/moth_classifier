@@ -57,6 +57,10 @@ class MothClassifierMixin:
 		return self.config["hierarchical"]
 
 	@property
+	def weighted_loss(self) -> bool:
+		return self.config["weighted_loss"]
+
+	@property
 	def n_classes(self) -> int:
 		if self.is_hierarchical:
 			return self.annot.hierarchy.n_concepts
@@ -68,10 +72,17 @@ class MothClassifierMixin:
 		# if self.is_hierarchical:
 		# 	self._clf_creator.kwargs["hierarchy"] = self.annot.hierarchy
 
-		return super().init_classifier(
+		weights = None
+		if self.weighted_loss:
+			logging.info("Using weighted CE loss")
+			weights = self.train_data.class_weights
+
+		kwargs.update(dict(
 			hierarchy=getattr(self.annot, "hierarchy", None),
 			use_hc=self.is_hierarchical,
-			**kwargs)
+		 	class_weights=weights,
+		))
+		return super().init_classifier(**kwargs)
 
 	def read_annotations(self):
 		args = AnnotationArgs(

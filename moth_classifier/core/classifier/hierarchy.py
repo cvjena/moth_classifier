@@ -33,9 +33,9 @@ class HierarchyMixin:
 			hierarchy=self.hierarchy, **kwargs)
 
 
-	def loss(self, pred: chainer.Variable, y: chainer.Variable) -> chainer.Variable:
+	def loss(self, pred: chainer.Variable, y: chainer.Variable, **kwargs) -> chainer.Variable:
 		if not self.use_hc:
-			return super().loss(pred, y)
+			return super().loss(pred, y, **kwargs)
 
 		y = chainer.cuda.to_cpu(chainer.as_array(y))
 

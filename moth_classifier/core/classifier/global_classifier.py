@@ -14,6 +14,7 @@ class Classifier(HierarchyMixin, SizeMixin,
 		w = self.class_weights
 		pred = self.predict(feat)
 		loss = self.loss(pred, y, class_weight=w)
+		loss += self.center_loss(feat, y)
 
 		if self._use_size_model:
 			pred = self.size_model(sizes, pred, y)

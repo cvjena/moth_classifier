@@ -28,6 +28,9 @@ def add_training_args(parser: BaseParser):
 		Arg("--test_fold_id", type=int, default=0),
 		Arg.flag("--weighted_loss",
 			help="use inversed class frequency to weight the CE loss"),
+		Arg.flag("--center_loss",
+			help="use class center loss proposed by (Wen et al., 2016) in"\
+			"'A discrimative feature learning approach for deep face recognition'")
 
 	], group_name="Training arguments")
 

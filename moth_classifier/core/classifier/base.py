@@ -5,6 +5,8 @@ import typing as T
 
 from contextlib import contextmanager
 
+from chainer import functions as F
+
 from moth_classifier.core import dataset
 from moth_classifier.core import prediction as preds
 
@@ -26,12 +28,22 @@ class BaseClassifier(abc.ABC):
 		only_head: bool,
 		n_accu_jobs: int = -1,
 		class_weights: np.ndarray = None,
+		center_loss: bool = False,
 		**kwargs):
 		self._only_head = only_head
 		self._class_weights = class_weights
 		super().__init__(*args, **kwargs)
+
+		self.init_class_centers(center_loss, beta=5e-2, lamb=1.0)
 		self.init_accumulators(n_jobs=n_accu_jobs)
 
+
+	def init_class_centers(self, is_enabled: bool, beta: float = 5e-2, lamb: float = 1.0):
+		self._center_loss = is_enabled
+		with self.init_scope():
+			self.add_persistent("_class_centers", None)
+		self._center_beta = beta
+		self._center_lambda = lamb
 
 	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50, **kwargs) -> None:
 		self._accumulators = {
@@ -76,6 +88,21 @@ class BaseClassifier(abc.ABC):
 
 	def accuracy(self, pred, gt):
 		return self.model.accuracy(pred, gt)
+
+	def center_loss(self, feats, gt):
+		if not self._center_loss: return 0
+
+		if self._class_centers is None:
+			shape = (self.n_classes, self.feat_size)
+			self._class_centers = self.xp.zeros(shape, dtype=feats.dtype)
+
+		current_centers = self._class_centers[gt]
+		loss = F.mean_squared_error(feats, current_centers)
+		if chainer.config.train:
+			current_centers[:] += self._center_beta * (current_centers - chainer.as_array(feats))
+
+		return loss * self._center_lambda
+
 
 	def eval_prediction(self, pred, gt, suffix=""):
 

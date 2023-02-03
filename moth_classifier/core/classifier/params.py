@@ -12,6 +12,7 @@ def get_params(opts):
 		only_head=opts.only_head,
 		n_accu_jobs=opts.n_jobs,
 		use_size_model=opts.use_size_model,
+		center_loss=opts.center_loss,
 		loss_alpha=opts.loss_alpha,
 	)
 

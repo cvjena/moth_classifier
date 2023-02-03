@@ -87,6 +87,10 @@ class PartClassifier(HierarchyMixin, SizeMixin,
 		glob_loss, glob_accu = self.loss(glob_pred, y), self.accuracy(glob_pred, y)
 		part_loss, part_accu = self.loss(part_pred, y), self.accuracy(part_pred, y)
 
+		glob_loss += self.center_loss(glob_feat, y)
+		# part_loss += self.center_loss(part_feats, y)
+
+
 		_mean_pred = self.fuse_prediction(glob_pred, part_pred)
 
 		self.eval_prediction(_mean_pred, y)

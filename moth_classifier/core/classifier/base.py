@@ -34,11 +34,11 @@ class BaseClassifier(abc.ABC):
 		self._class_weights = class_weights
 		super().__init__(*args, **kwargs)
 
-		self.init_class_centers(center_loss, beta=5e-2, lamb=1.0)
+		self.init_class_centers(center_loss)
 		self.init_accumulators(n_jobs=n_accu_jobs)
 
 
-	def init_class_centers(self, is_enabled: bool, beta: float = 5e-2, lamb: float = 1.0):
+	def init_class_centers(self, is_enabled: bool, beta: float = 5e-1, lamb: float = 1e-3):
 		self._center_loss = is_enabled
 		with self.init_scope():
 			self.add_persistent("_class_centers", None)

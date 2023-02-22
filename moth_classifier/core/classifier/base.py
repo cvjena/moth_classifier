@@ -38,11 +38,13 @@ class BaseClassifier(abc.ABC):
 		self.init_accumulators(n_jobs=n_accu_jobs)
 
 
-	def init_class_centers(self, is_enabled: bool, beta: float = 5e-1, lamb: float = 1e-3):
+	def init_class_centers(self, is_enabled: bool, alpha: float = 5e-1, lamb: float = 1e-3):
 		self._center_loss = is_enabled
 		with self.init_scope():
 			self.add_persistent("_class_centers", None)
-		self._center_beta = beta
+			self.add_persistent("t", 1)
+
+		self._center_alpha = alpha
 		self._center_lambda = lamb
 
 	def init_accumulators(self, few_shot_count: int = 20, many_shot_count: int = 50, **kwargs) -> None:
@@ -99,9 +101,21 @@ class BaseClassifier(abc.ABC):
 		current_centers = self._class_centers[gt]
 		loss = F.mean_squared_error(feats, current_centers)
 		if chainer.config.train:
-			current_centers[:] += self._center_beta * (current_centers - chainer.as_array(feats))
+			current_centers[:] = self._ema(current_centers, chainer.as_array(feats))
+			self.t += 1
 
 		return loss * self._center_lambda
+
+
+	def _ema(self, old, new):
+		alpha = self._center_alpha
+		prev_correction = 1 - (alpha ** (self.t-1))
+		correction = 1 - (alpha ** self.t)
+
+		uncorrected_old = old * prev_correction
+		res = alpha * uncorrected_old + (1 - alpha) * new
+
+		return res / correction
 
 
 	def eval_prediction(self, pred, gt, suffix=""):

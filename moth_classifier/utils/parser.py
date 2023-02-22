@@ -5,6 +5,8 @@ from cvfinetune.parser import FineTuneParser
 
 def add_evaluation_args(parser: BaseParser):
 	parser.add_args([
+		Arg("--eval_output", default="evaluation.yml",
+			help="file name for the evaluation output"),
 		Arg("--force", action="store_true",
 			help="forces evaluation even if the evaluation output file already exists"),
 	], group_name="Evaluation arguments")
@@ -25,7 +27,6 @@ def add_training_args(parser: BaseParser):
 			"It accumulates gradients over the training and " + \
 			"updates the weights only if the update size is exceeded"),
 
-		Arg("--test_fold_id", type=int, default=0),
 		Arg.flag("--weighted_loss",
 			help="use inversed class frequency to weight the CE loss"),
 		Arg.flag("--center_loss",
@@ -79,6 +80,10 @@ def parse_args(args=None, namespace=None):
 			help="Use only the triplet loss for training, ignore the CE loss"),
 
 	], group_name="Model arguments")
+
+	_common_parser.add_args([
+		Arg("--test_fold_id", type=int, default=0),
+	], group_name="Dataset arguments")
 
 	_common_parser.add_args([
 		Arg("--cs_config",

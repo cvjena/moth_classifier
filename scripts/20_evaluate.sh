@@ -11,7 +11,9 @@ if [[ $error != 0 ]]; then
 fi
 
 echo "Evaluating"
+EVAL_OUTPUT=${EVAL_OUTPUT:-"evaluation.yml"}
 
+OPTS="${OPTS} --eval_output ${EVAL_OUTPUT}"
 OPTS="${OPTS} --load_strict"
 OPTS="${OPTS} --load_path model/"
 
@@ -21,5 +23,5 @@ $PYTHON $RUN_SCRIPT evaluate \
 	${DATASET} \
 	${PARTS} \
 	${OPTS} \
-	$@ && cat $(dirname ${LOAD})/evaluation.yml
+	$@ && cat $(dirname ${LOAD})/${EVAL_OUTPUT}
 

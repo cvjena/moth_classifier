@@ -13,7 +13,7 @@ def _mean(arrays):
 class PartClassifier(HierarchyMixin, SizeMixin,
 	BaseClassifier, classifiers.SeparateModelClassifier):
 
-	def __init__(self, concat_features, n_parts: int, *args, **kwargs):
+	def __init__(self, *args, concat_features, n_parts: int, **kwargs):
 		super().__init__(*args, **kwargs)
 		self._concat = concat_features
 		self.n_parts = n_parts

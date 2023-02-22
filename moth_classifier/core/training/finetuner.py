@@ -58,7 +58,7 @@ class MothClassifierMixin:
 
 	@property
 	def weighted_loss(self) -> bool:
-		return self.config["weighted_loss"]
+		return self.config.get("weighted_loss", False)
 
 	@property
 	def n_classes(self) -> int:
@@ -89,7 +89,8 @@ class MothClassifierMixin:
 			self.info_file,
 			self.dataset_name,
 			self.part_type,
-			self.feature_model
+			self.feature_model,
+			self.config["test_fold_id"],
 		)
 
 		self.annot = annot.MothAnnotations.new(args, load_strict=False)

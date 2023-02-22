@@ -22,6 +22,7 @@ def main(args, experiment_name="Moth classifier"):
 			ignore=[
 				"mode", "load", "load_path", "gpu",
 				"mpi", "n_jobs", "batch_size",
+				"test_fold_id",
 				"center_crop_on_val",
 				"only_klass",
 			],
@@ -62,7 +63,7 @@ def main(args, experiment_name="Moth classifier"):
 	elif args.mode == "evaluate":
 
 		dest_folder = Path(args.load).parent
-		eval_fname = dest_folder / "evaluation.yml"
+		eval_fname = dest_folder / args.eval_output
 
 		tuner.evaluate(eval_fname, force=args.force)
 

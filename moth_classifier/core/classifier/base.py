@@ -123,8 +123,8 @@ class BaseClassifier(abc.ABC):
 		self.accumulator.update(pred, gt)
 		accum = self.accumulator
 		evaluations = dict(
-			accu=self.accuracy,
-			accu2=preds.Metric(accum, key="accuracy"),
+			# accu=self.accuracy,
+			accu=preds.Metric(accum, key="accuracy"),
 			prec=preds.Precision(accum),
 			rec=preds.Recall(accum),
 			f1=preds.FScore(accum, beta=1),
@@ -133,23 +133,23 @@ class BaseClassifier(abc.ABC):
 			hrec=preds.Metric(accum, key="h_recall"),
 			hf1=preds.Metric(accum, key="h_f1_score"),
 
-			few_count=preds.Metric(accum, key="few_shot_count"),
-			few_cls_count=preds.Metric(accum, key="few_shot_cls_count"),
-			prec_fs=preds.Metric(accum, key="precision/few-shot@20"),
-			rec_fs=preds.Metric(accum, key="recall/few-shot@20"),
-			f1_fs=preds.Metric(accum, key="f1_score/few-shot@20"),
+			# few_count=preds.Metric(accum, key="few_shot_count"),
+			# few_cls_count=preds.Metric(accum, key="few_shot_cls_count"),
+			# prec_fs=preds.Metric(accum, key="precision/few-shot@20"),
+			# rec_fs=preds.Metric(accum, key="recall/few-shot@20"),
+			# f1_fs=preds.Metric(accum, key="f1_score/few-shot@20"),
 
-			med_count=preds.Metric(accum, key="med_shot_count"),
-			med_cls_count=preds.Metric(accum, key="med_shot_cls_count"),
-			prec_mds=preds.Metric(accum, key="precision/med-shot@20-50"),
-			rec_mds=preds.Metric(accum, key="recall/med-shot@20-50"),
-			f1_mds=preds.Metric(accum, key="f1_score/med-shot@20-50"),
+			# med_count=preds.Metric(accum, key="med_shot_count"),
+			# med_cls_count=preds.Metric(accum, key="med_shot_cls_count"),
+			# prec_mds=preds.Metric(accum, key="precision/med-shot@20-50"),
+			# rec_mds=preds.Metric(accum, key="recall/med-shot@20-50"),
+			# f1_mds=preds.Metric(accum, key="f1_score/med-shot@20-50"),
 
-			many_count=preds.Metric(accum, key="many_shot_count"),
-			many_cls_count=preds.Metric(accum, key="many_shot_cls_count"),
-			prec_ms=preds.Metric(accum, key="precision/many-shot@50"),
-			rec_ms=preds.Metric(accum, key="recall/many-shot@50"),
-			f1_ms=preds.Metric(accum, key="f1_score/many-shot@50"),
+			# many_count=preds.Metric(accum, key="many_shot_count"),
+			# many_cls_count=preds.Metric(accum, key="many_shot_cls_count"),
+			# prec_ms=preds.Metric(accum, key="precision/many-shot@50"),
+			# rec_ms=preds.Metric(accum, key="recall/many-shot@50"),
+			# f1_ms=preds.Metric(accum, key="f1_score/many-shot@50"),
 		)
 
 

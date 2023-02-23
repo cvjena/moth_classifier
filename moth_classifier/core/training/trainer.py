@@ -24,6 +24,9 @@ class Trainer(BaseTrainer):
 			"main/prec",
 			"main/rec",
 			"main/f1",
+			"main/hprec",
+			"main/hrec",
+			"main/hf1",
 		]
 
 		print_values.extend([

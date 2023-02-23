@@ -37,6 +37,9 @@ class HierarchyMixin:
 		if not self.use_hc:
 			return super().loss(pred, y, **kwargs)
 
+		if kwargs.get("class_weight") is not None:
+			import pdb; pdb.set_trace()
+
 		y = chainer.cuda.to_cpu(chainer.as_array(y))
 
 		hc_y = self.hierarchy.embed_labels(y)

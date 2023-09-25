@@ -1,18 +1,24 @@
 cvargparse~=0.5
 cvdatasets~=0.12
 cvfinetune~=0.10
-chainer-addons~=0.10
+cvmodelz~=0.3
+cluster_parts>=0.4.1,<1.0.0
+fve_layer~=0.1.0
+
 
 chainer~=7.7
 chainercv~=0.13
-chainercv2~=0.0.55
-
+chainercv2
 
 numpy~=1.18
-tqmd~=4.43
+tqdm~=4.43
 sacred~=0.8
 scipy~=1.4
 scikit-learn~=0.22
 scikit-image~=0.16
+tabulate
+opencv-python-headless~=4.5
 
-
+wandb
+pymongo
+mpi4py

@@ -1,12 +1,23 @@
 import chainer
-import torch
+import warnings
+try:
+	import torch
+	from pytorch_metric_learning.miners import TripletMarginMiner
+	from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
-from chainer import function_node
+except ImportError:
+	warnings.warn("PyTorch could not be imported, hence TripletClasifier will not work!")
+	HAS_TORCH = False
+
+	# dummy class
+	class TripletMarginMiner:
+		pass
+else:
+	HAS_TORCH = True
+
 from chainer import links as L
 from chainer import functions as F
 from chainer.backends.cuda import to_cpu
-from pytorch_metric_learning.miners import TripletMarginMiner
-from pytorch_metric_learning.utils import loss_and_miner_utils as lmu
 
 from moth_classifier.core.classifier import Classifier
 
@@ -21,6 +32,7 @@ class CustomMiner(TripletMarginMiner):
 
 
 	def forward(self, embeddings, labels, ref_emb=None, ref_labels=None):
+		assert HAS_TORCH, "PyTorch was not installed!"
 
 		embeddings = as_torch_tensor(embeddings)
 		labels = as_torch_tensor(labels)
@@ -52,11 +64,11 @@ def reciprocal_triplet_loss(anch, pos, neg, reduce_method="mean"):
 class TripletClassifier(Classifier):
 
 	def __init__(self, *args,
-				 margin: float = 0.1,
-				 embedding_size: int = 128,
-				 alpha: float = 0.01,
-				 only_triplet: bool = False,
-				 **kwargs):
+				margin: float = 0.1,
+				embedding_size: int = 128,
+				alpha: float = 0.01,
+				only_triplet: bool = False,
+				**kwargs):
 
 		super().__init__(*args, **kwargs)
 		self._emb_size = embedding_size if embedding_size > 0 else self.feat_size

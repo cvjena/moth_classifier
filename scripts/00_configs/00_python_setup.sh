@@ -4,7 +4,7 @@
 
 _conda=${HOME}/.miniconda3
 source ${_conda}/etc/profile.d/conda.sh
-conda activate ${CONDA_ENV:-chainer7cu11}
+conda activate ${CONDA_ENV:-moth_scanner}
 
 N_MPI=${N_MPI:-0}
 

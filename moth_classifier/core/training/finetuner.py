@@ -1,7 +1,6 @@
 import chainer
 import logging
 import numpy as np
-import wandb
 import yaml
 
 from chainer.backends.cuda import to_cpu
@@ -9,8 +8,6 @@ from chainer.training.updaters import StandardUpdater
 from chainer_addons.training import MiniBatchUpdater
 from cvdatasets import AnnotationArgs
 from cvfinetune import finetuner as ft
-from cvfinetune.training.extensions import WandbReport
-from datetime import datetime as dt
 from munch import munchify
 from tqdm import tqdm
 

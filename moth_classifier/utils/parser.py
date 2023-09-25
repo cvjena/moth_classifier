@@ -46,18 +46,9 @@ def add_training_args(parser: BaseParser):
 
 	], group_name="Sacred arguments")
 
+def add_common_args(parser: BaseParser):
 
-def parse_args(args=None, namespace=None):
-	main_parser = BaseParser()
-
-	subp = main_parser.add_subparsers(
-		title="Execution modes",
-		dest="mode",
-		required=True
-	)
-	_common_parser = FineTuneParser(add_help=False, nologging=True)
-
-	_common_parser.add_args([
+	parser.add_args([
 		Arg.flag("--concat_features",
 			help="If set, concatenate part features instead of averaging."),
 
@@ -81,14 +72,28 @@ def parse_args(args=None, namespace=None):
 
 	], group_name="Model arguments")
 
-	_common_parser.add_args([
+	parser.add_args([
 		Arg("--test_fold_id", type=int, default=0),
 	], group_name="Dataset arguments")
 
-	_common_parser.add_args([
+	parser.add_args([
 		Arg("--cs_config",
 			help="Config file with settings for the extraction of CS parts")
 	], group_name="CS Parts")
+
+
+
+def parse_args(args=None, namespace=None):
+	main_parser = BaseParser()
+
+	subp = main_parser.add_subparsers(
+		title="Execution modes",
+		dest="mode",
+		required=True
+	)
+	_common_parser = FineTuneParser(add_help=False, nologging=True)
+
+	add_common_args(_common_parser)
 
 	parser = subp.add_parser("train",
 		help="Starts moth classifier training",

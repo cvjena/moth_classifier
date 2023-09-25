@@ -49,12 +49,12 @@ class Dataset(
 				logging.info(f"Added {sampling_type} with {count=}")
 
 			else:
-				logging.info(f"No over- or undersampling is added")
+				logging.info("No over- or undersampling is added")
 
 			return dict(opts=opts,
-				        sampling_type=sampling_type,
-				        sampling_count=count
-				       )
+						sampling_type=sampling_type,
+						sampling_count=count
+						)
 
 		return inner
 

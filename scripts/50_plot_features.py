@@ -204,7 +204,7 @@ def main(args):
 	classes = np.unique(labels)
 	cols_markers = {cls: (c, m) for (cls, c, m) in zip(classes, colors, markers)}
 
-	logging.info(f"=== Overall ===")
+	logging.info("=== Overall ===")
 	logging.info(f"Found {len(labels):,d} samples")
 	logging.info(f"with {len(classes):,d} classes")
 

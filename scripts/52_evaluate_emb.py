@@ -16,7 +16,6 @@ from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn import metrics
 from tabulate import tabulate
-from tqdm.auto import tqdm
 from tqdm.auto import trange
 
 from sklearn.mixture import GaussianMixture as GMM
@@ -43,19 +42,19 @@ except ImportError as e:
 
 
 colors = cycler([
-    "#e6194b",
-    "#3cb44b",
-    "#ffe119",
-    "#4363d8",
-    "#f58231",
-    "#911eb4",
-    "#46f0f0",
-    "#f032e6",
-    "#bcf60c",
-    "#fabebe",
-    "#008080",
-    "#e6beff",
-    "#9a6324",
+	"#e6194b",
+	"#3cb44b",
+	"#ffe119",
+	"#4363d8",
+	"#f58231",
+	"#911eb4",
+	"#46f0f0",
+	"#f032e6",
+	"#bcf60c",
+	"#fabebe",
+	"#008080",
+	"#e6beff",
+	"#9a6324",
 ])
 
 markers = cycler([
@@ -191,38 +190,38 @@ def evaluate(metric, X, y, pred):
 	raise NotImplementedError(f"Unknown metric: {metric}")
 
 	# if isinstance(value, (int, float)) or np.isscalar(value):
-	# 	return f"{value:.2f}"
+	#   return f"{value:.2f}"
 
 	# elif len(value) == 1:
-	# 	return f"{value[0]:.2f}"
+	#   return f"{value[0]:.2f}"
 
 	# else:
-	# 	return f"{np.mean(value):.2f} \u00B1 {np.std(value):.2f}"
+	#   return f"{np.mean(value):.2f} \u00B1 {np.std(value):.2f}"
 
 
 def neighborhood_ap(X, y, *, metric="euclidean"):
-    N, D = X.shape
-    dists = squareform(pdist(X, metric=metric))
-    dists[np.eye(N, dtype=bool)] = np.inf
-    neighbors = dists.argsort(axis=1)
+	N, D = X.shape
+	dists = squareform(pdist(X, metric=metric))
+	dists[np.eye(N, dtype=bool)] = np.inf
+	neighbors = dists.argsort(axis=1)
 
-    idxs = np.arange(1, N+1)
-    res = np.zeros(N, dtype=np.float32)
-    for i, (lab, neig_cls) in enumerate(zip(y, y[neighbors])):
-        # subtract itself
-        Nc = (y == lab).sum() - 1
-        if Nc == 0:
-        	# we have only one sample of this class, hence we cannot evaluate its neighbors
-        	res[i] = np.nan
-        	continue
-        recall = (neig_cls == lab).cumsum() / Nc
-        recall0 = np.hstack([[0], recall])
-        prec = (neig_cls == lab).cumsum() / idxs
+	idxs = np.arange(1, N+1)
+	res = np.zeros(N, dtype=np.float32)
+	for i, (lab, neig_cls) in enumerate(zip(y, y[neighbors])):
+		# subtract itself
+		Nc = (y == lab).sum() - 1
+		if Nc == 0:
+			# we have only one sample of this class, hence we cannot evaluate its neighbors
+			res[i] = np.nan
+			continue
+		recall = (neig_cls == lab).cumsum() / Nc
+		recall0 = np.hstack([[0], recall])
+		prec = (neig_cls == lab).cumsum() / idxs
 
-        AP = np.sum(prec[:-1] * (recall[:-1] - recall0[:-2]))
-        res[i] = AP
+		AP = np.sum(prec[:-1] * (recall[:-1] - recall0[:-2]))
+		res[i] = AP
 
-    return res
+	return res
 
 
 def evaluate_clustering(data: T.List[Features], *args,
@@ -288,7 +287,7 @@ def evaluate_clustering(data: T.List[Features], *args,
 					c, m = markers.get(cls, ("k", "."))# if cls != -1 else
 
 					# if cls not in markers:
-					# 	print(cls)
+					#   print(cls)
 
 					xy = X2d[preds==cls].T
 					ax.scatter(*xy, c=c, marker=m)
@@ -409,7 +408,7 @@ parser = GPUParser([
 	Arg("embeddings"),
 
 	# Arg.int("--tsne", "-tsne", default=-1,
-	# 	help="Perform dimensionality reduction with TSNE before clustering"),
+	#   help="Perform dimensionality reduction with TSNE before clustering"),
 
 	Arg.int("--seed"),
 	Arg.int("--n_runs", default=1),

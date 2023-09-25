@@ -7,7 +7,6 @@ from contextlib import contextmanager
 
 from chainer import functions as F
 
-from moth_classifier.core import dataset
 from moth_classifier.core import prediction as preds
 
 

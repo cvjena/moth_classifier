@@ -8,7 +8,7 @@ Hence, we need to install cupy from pip, but before doing so, we have to install
 ```bash
 conda create -n moth_scanner python~=3.9.0 mpi4py cython~=0.28
 conda activate moth_scanner
-conda install -c conda-forge -c nvidia cudnn~=8.0.0 nccl cutensor cub \
+conda install -c conda-forge -c nvidia cudnn~=8.0.0 nccl cutensor \
 	cudatoolkit~=11.0.3	cudatoolkit-dev~=11.0.3 numpy~=1.23.0
 ```
 

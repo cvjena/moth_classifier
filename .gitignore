@@ -25,3 +25,4 @@ mock_data
 profile
 *.csv
 
+src/cupy

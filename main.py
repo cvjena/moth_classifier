@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 if __name__ != '__main__': raise Exception("Do not import me!")
+# ruff: noqa: E402
 
 import chainer
 import logging
-# import matplotlib
+import matplotlib
 import numpy as np
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 
 from cvfinetune.parser.utils import populate_args
 from pathlib import Path

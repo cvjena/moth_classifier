@@ -235,7 +235,7 @@ class PredictionAccumulator:
 			f"f{beta}_score": scores.f_score,
 		}
 
-		if self.hierarchy is not None:
+		if self.hierarchy is not None and self.use_hc:
 			h_scores = _calc_h_scores(preds, gt, beta=beta, graph=self.hierarchy.graph)
 
 			assert h_scores.accuracy == scores.accuracy, \

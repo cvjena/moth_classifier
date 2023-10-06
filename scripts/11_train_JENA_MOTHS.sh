@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 dataset=JENA_MOTHS_CROPPED
 OPTS=${OPTS:-""}
 
@@ -21,7 +20,9 @@ Examples:
 
 $ ./11_train_JENA_MOTHS.sh --no_sacred # < without sacred logging
 
-$ ./11_train_JENA_MOTHS.sh -hc # < for hierarchical classifier
+$ AUG=1 ./11_train_JENA_MOTHS.sh # < use an augmented (GBIF and LepiForum) dataset
+
+$ HC=1 ./11_train_JENA_MOTHS.sh # < for hierarchical classifier
 
 $ PARTS=LAZY_CS_PARTS ./11_train_JENA_MOTHS.sh
 BLOCK_COMMENT

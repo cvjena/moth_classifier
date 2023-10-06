@@ -1,5 +1,3 @@
-import chainer
-
 from cvfinetune.training import Trainer as BaseTrainer
 
 class Trainer(BaseTrainer):

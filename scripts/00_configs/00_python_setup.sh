@@ -35,7 +35,7 @@ else
 fi
 
 if [[ ! -z $DRY_RUN ]]; then
-    echo "Dry run enabled!"
+	echo "Dry run enabled!"
 	PYTHON="echo ${PYTHON}"
 fi
 

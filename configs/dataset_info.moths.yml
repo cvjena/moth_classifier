@@ -72,13 +72,13 @@ DATASETS:
 
   JENA_MOTHS_CROPPED_AUG: &jena_cropped_aug
     <<: *base_moths
-    folder: moths/jena_moths/2022-08/cropped_augmented
-    n_classes: 4626
+    folder: moths/jena_moths/2023-02/cropped_spec_augmented
+    n_classes: 4165
     annotations: ORIGINAL
 
   JENA_MOTHS_CROPPED_AUG_HC:
     <<: *jena_cropped_aug
-    folder: moths/jena_moths/2023-01/cropped_augmented
+    folder: moths/jena_moths/2023-02/cropped_spec_augmented
 
   JENA_MOTHS_CROPPED_AUG_EU:
     <<: *base_moths

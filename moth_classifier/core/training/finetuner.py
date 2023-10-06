@@ -9,6 +9,7 @@ from chainer_addons.training import MiniBatchUpdater
 from cvdatasets import AnnotationArgs
 from cvfinetune import finetuner as ft
 from munch import munchify
+from pathlib import Path
 from tqdm import tqdm
 
 from cluster_parts import core
@@ -47,7 +48,18 @@ def new(opts, experiment_name):
 	return tuner, tuner_factory.get("comm")
 
 
+def dump_labels(dataset, log_dir: Path):
+	labs = dataset._annot._unq2orig_labels
+	labs = {int(key): str(val) for key, val in labs.items()}
+	log_dir.mkdir(parents=True, exist_ok=True)
+	with open(log_dir / "unq2orig_labels.yml", "w") as f:
+		yaml.dump(labs, f, sort_keys=True)
+
 class MothClassifierMixin:
+
+	def run(self, *args, opts, **kwargs):
+		dump_labels(self.train_data, Path(opts.output))
+		super().run(*args, opts=opts, **kwargs)
 
 	@property
 	def is_hierarchical(self) -> bool:
